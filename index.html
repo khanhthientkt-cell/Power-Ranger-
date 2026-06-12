@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PaperLens — Journal Paper Analyzer</title>
+  <meta name="description" content="Analyze journal papers: structure, key terms, readability, references, and AI summaries." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🔬</span>
+      <div>
+        <h1>PaperLens</h1>
+        <p class="tagline">Read smarter. Analyze any journal paper in seconds.</p>
+      </div>
+    </div>
+    <nav class="header-actions">
+      <button id="settingsBtn" class="btn ghost" title="AI settings">⚙ AI Settings</button>
+      <button id="sampleBtn" class="btn ghost" title="Load a sample paper">📄 Try a sample</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Input panel -->
+    <section id="inputPanel" class="panel input-panel">
+      <h2>1. Add your paper</h2>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a PDF or text file">
+        <div class="dropzone-inner">
+          <span class="drop-icon" aria-hidden="true">⬆</span>
+          <p><strong>Drop a PDF or .txt here</strong> or click to browse</p>
+          <p class="muted small">Your file is processed entirely in your browser. Nothing is uploaded unless you enable AI summaries.</p>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.txt,text/plain,application/pdf" hidden />
+      </div>
+
+      <div class="or-divider"><span>or paste the text</span></div>
+      <textarea id="textInput" rows="8" placeholder="Paste the full text of a paper (title, abstract, sections, references)…"></textarea>
+
+      <div class="actions">
+        <button id="analyzeBtn" class="btn primary">Analyze paper</button>
+        <button id="clearBtn" class="btn ghost">Clear</button>
+        <span id="status" class="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="results hidden" aria-live="polite">
+      <div class="results-head">
+        <h2 id="paperTitle">Analysis</h2>
+        <button id="exportBtn" class="btn ghost small">⬇ Export report (.md)</button>
+      </div>
+
+      <div class="metrics-grid" id="metricsGrid"></div>
+
+      <div class="cards">
+        <article class="card" id="summaryCard">
+          <div class="card-head">
+            <h3>AI Summary</h3>
+            <button id="aiSummaryBtn" class="btn primary small">Generate with Claude</button>
+          </div>
+          <div class="card-body" id="summaryBody">
+            <p class="muted">Add your Claude API key in <strong>AI Settings</strong> to generate a plain-language summary, key contributions, and limitations.</p>
+          </div>
+        </article>
+
+        <article class="card" id="structureCard">
+          <div class="card-head"><h3>Structure (IMRaD)</h3></div>
+          <div class="card-body" id="structureBody"></div>
+        </article>
+
+        <article class="card" id="keywordsCard">
+          <div class="card-head"><h3>Key terms</h3></div>
+          <div class="card-body" id="keywordsBody"></div>
+        </article>
+
+        <article class="card" id="readabilityCard">
+          <div class="card-head"><h3>Readability</h3></div>
+          <div class="card-body" id="readabilityBody"></div>
+        </article>
+
+        <article class="card wide" id="sentencesCard">
+          <div class="card-head"><h3>Highlight sentences</h3></div>
+          <div class="card-body" id="sentencesBody"></div>
+        </article>
+
+        <article class="card wide" id="referencesCard">
+          <div class="card-head"><h3>References</h3></div>
+          <div class="card-body" id="referencesBody"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card">
+      <h3 id="settingsTitle">AI Settings</h3>
+      <p class="muted small">
+        Optional. Paste a Claude API key to enable AI summaries. The key is stored only in this browser
+        (localStorage) and sent directly to Anthropic's API. Calls require network access.
+      </p>
+      <label for="apiKey">Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+      <label for="modelSelect">Model</label>
+      <select id="modelSelect">
+        <option value="claude-opus-4-8">Claude Opus 4.8 (most capable)</option>
+        <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 (balanced)</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fastest)</option>
+      </select>
+      <div class="modal-actions">
+        <button id="saveSettings" class="btn primary">Save</button>
+        <button id="closeSettings" class="btn ghost">Close</button>
+        <button id="clearKey" class="btn ghost danger">Remove key</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>PaperLens runs locally in your browser. Built for researchers, students, and reviewers.</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
