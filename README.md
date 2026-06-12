@@ -29,6 +29,22 @@ Everything runs locally in your browser. Your paper text is **never** sent anywh
 
 > Note: Direct browser calls to the Anthropic API require CORS to be permitted; some networks or environments may block this. The local analysis works fully offline.
 
+## ☁️ Deploy to Cloudflare Pages
+
+This is a static site, so no build step is required.
+
+1. Push this repo to GitHub (already done).
+2. In the [Cloudflare dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+3. Select this repository (`khanhthientkt-cell/power-ranger-`).
+4. Configure the build:
+   - **Production branch:** `claude/ecstatic-pascal-gmlpqf`
+   - **Framework preset:** `None`
+   - **Build command:** *(leave empty)*
+   - **Build output directory:** `/`
+5. Click **Save and Deploy**. Every push to the production branch redeploys automatically.
+
+Security headers (CSP, etc.) are configured in [`_headers`](./_headers).
+
 ## 🛠 Tech
 
 Plain HTML, CSS, and vanilla JavaScript — zero dependencies to install. pdf.js is loaded from a CDN for PDF parsing.
