@@ -153,8 +153,10 @@
         <option value="openai">OpenAI-compatible (custom endpoint)</option>
       </select>
 
-      <label for="baseUrl">API base URL</label>
-      <input type="text" id="baseUrl" placeholder="https://api.anthropic.com" autocomplete="off" />
+      <div id="baseUrlRow">
+        <label for="baseUrl">API base URL</label>
+        <input type="text" id="baseUrl" placeholder="https://api.anthropic.com" autocomplete="off" />
+      </div>
 
       <label for="apiKey">API key</label>
       <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />

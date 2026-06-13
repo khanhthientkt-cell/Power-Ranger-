@@ -57,13 +57,19 @@
 
   function updateSettingsHint() {
     const p = providerSelect.value;
+    const baseRow = $("baseUrlRow");
     if (p === "openai") {
+      if (baseRow) baseRow.style.display = "";
       settingsHint.innerHTML =
         "OpenAI-compatible mode calls <code>{base}/chat/completions</code>. " +
         "Note: an <strong>http://</strong> endpoint only works when this site is opened over http " +
         "(e.g. locally) — browsers block http calls from an https page.";
     } else {
-      settingsHint.textContent = "Anthropic mode calls {base}/v1/messages directly from your browser.";
+      // Anthropic: base URL is fixed, so hide it to keep things simple.
+      if (baseRow) baseRow.style.display = "none";
+      settingsHint.innerHTML =
+        "Paste an Anthropic key (<code>sk-ant-…</code>) and pick a model. " +
+        "Works on the live https site — no extra setup.";
     }
   }
 
