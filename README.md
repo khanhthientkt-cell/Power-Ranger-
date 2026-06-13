@@ -30,7 +30,19 @@ Open **AI Settings** and choose a provider:
 - **Anthropic (Claude):** base URL `https://api.anthropic.com`, key `sk-ant-...`, model e.g. `claude-sonnet-4-6`.
 - **OpenAI-compatible:** any endpoint exposing `/chat/completions` (LiteLLM, vLLM, Ollama, gateways, etc.). Set the base URL (including `/v1`), your `Authorization: Bearer` key, and the model name.
 
-> ⚠️ **http endpoints:** A browser will **block** requests to an `http://` API from a page served over `https://` ("mixed content"). If your endpoint is http-only, open this site over **http** (e.g. run it locally) for the AI features to work. The non-AI analysis works everywhere.
+> ⚠️ **http endpoints:** A browser will **block** requests to an `http://` API from a page served over `https://` ("mixed content"). If your endpoint is http-only, open this site over **http** (e.g. run it locally) for the AI features to work, **or** deploy the built-in proxy (below). The non-AI analysis works everywhere.
+
+## 🔌 Using a private http endpoint via the built-in proxy (Vercel)
+
+If your AI endpoint is `http://` on a non-standard port and you can't change it, deploy this repo to **Vercel** — it includes a serverless proxy (`api/chat/completions.js`) that calls your endpoint server-side, so the browser only talks to https.
+
+1. Go to **vercel.com**, sign in with GitHub, **Add New → Project**, and import this repository.
+2. In the project's **Settings → Environment Variables**, add:
+   - `AI_TARGET_URL` = `http://211.20.245.95:21434/v1` (your endpoint, including `/v1`)
+3. Deploy. You'll get a URL like `https://your-project.vercel.app`.
+4. Open it → **AI Settings** → Provider **OpenAI-compatible** → **Base URL** = `/api` → paste your key → **Save**.
+
+> This only works if your endpoint is reachable from the public internet. If it's restricted to a private/campus network, no external host (Vercel, Cloudflare, etc.) can reach it — use the Anthropic provider instead.
 
 ## 🔐 Privacy
 
