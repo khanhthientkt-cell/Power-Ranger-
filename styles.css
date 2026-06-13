@@ -244,6 +244,39 @@ body{
 .new-sticker{font-size:70px;animation:cheer 1s ease infinite;}
 .confetti-canvas{position:absolute;inset:0;z-index:1;pointer-events:none;}
 
+/* ===================== VOYAGE MAP ===================== */
+.voyage-map{position:relative;flex:1;overflow-y:auto;padding:10px 0 40px;background:linear-gradient(180deg,#bdeeff,#8fd9f5 60%,#6fc7ee);}
+.voyage-inner{position:relative;max-width:520px;margin:0 auto;padding:20px 16px;}
+.sea-route{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.island-node{position:relative;z-index:1;display:flex;align-items:center;gap:14px;width:78%;margin:14px 0;background:rgba(255,255,255,.92);border-radius:24px;padding:14px 16px;box-shadow:var(--shadow-sm);border:4px solid #fff;outline:4px solid var(--pink-soft);cursor:pointer;transition:transform .1s;}
+.island-node:nth-child(even){margin-left:auto;}
+.island-node:active{transform:scale(.98);}
+.island-node .isl-emoji{font-size:50px;line-height:1;flex:none;filter:drop-shadow(0 3px 2px rgba(0,0,0,.15));}
+.island-node .isl-info{flex:1;text-align:left;min-width:0;}
+.island-node .isl-name{font-weight:900;color:#43345a;font-size:17px;}
+.island-node .isl-tag{font-weight:800;color:var(--purple);font-size:12px;}
+.island-node .isl-status{font-weight:900;font-size:13px;margin-top:2px;}
+.island-node.done{outline-color:var(--green);}
+.island-node.done .isl-status{color:var(--green-dark);}
+.island-node.current{outline-color:var(--sun);animation:islpulse 1.6s ease-in-out infinite;}
+@keyframes islpulse{0%,100%{box-shadow:var(--shadow-sm);}50%{box-shadow:var(--shadow-sm),0 0 0 8px rgba(255,206,79,.35);}}
+.island-node.current .isl-status{color:#e88a00;}
+.island-node.locked{filter:grayscale(.7) opacity(.65);cursor:default;outline-color:#ccc;}
+.island-node .isl-flag{position:absolute;top:-10px;right:-8px;font-size:30px;}
+.island-node .isl-ship{position:absolute;bottom:-14px;left:-10px;font-size:34px;animation:bob 2s ease-in-out infinite;}
+
+/* crew grid */
+.crew-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px;margin:14px 0 18px;}
+.crew-cell{display:flex;flex-direction:column;align-items:center;gap:4px;background:#fbf7ff;border:3px solid #ece3fb;border-radius:16px;padding:10px 6px;}
+.crew-cell.got{background:#fff7d6;border-color:var(--sun);animation:popItem .4s ease;}
+.crew-cell .cc-emoji{font-size:40px;}
+.crew-cell.locked .cc-emoji{filter:grayscale(1) opacity(.4);}
+.crew-cell .cc-name{font-weight:800;font-size:11px;color:#6a5a82;line-height:1.1;}
+
+/* recruit overlay extras */
+#recruit .celebrate-badge{font-size:96px;}
+#recruit{background:rgba(79,208,224,.45);}
+
 /* ---- fox expressions (mood) ---- */
 .foxy .v{display:none;}
 .foxy .eyes-open,.foxy .mouth-smile{display:block;}

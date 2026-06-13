@@ -35,7 +35,28 @@
   /* ---------------- state ---------------- */
   const SAVE_KEY = "foxyLab.save.v1";
   const AI_KEY = "foxyLab.ai.v1";
-  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[] };
+  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[], islandIndex:0, crew:[] };
+
+  /* ---------------- Grand Voyage islands + crew (original characters) ---------------- */
+  const ISLANDS = [
+    { id:"cove",     name:"Counting Cove",   icon:"🏝️", tag:"Counting",   pool:["count","seq"],
+      crew:{emoji:"🐧", name:"Pip the Penguin",  bio:"Pip counts every fish in the sea! He teaches us to collect data by counting."} },
+    { id:"cliffs",   name:"Compare Cliffs",  icon:"⛰️", tag:"More & Less", pool:["compare","bignum"],
+      crew:{emoji:"🐰", name:"Bouncy the Bunny", bio:"Bouncy always hops to the bigger pile! She teaches us to compare amounts."} },
+    { id:"harbor",   name:"Chart Harbor",    icon:"⚓", tag:"Charts",      pool:["survey","chartval"],
+      crew:{emoji:"🐢", name:"Tilly the Turtle", bio:"Tilly draws tall charts in the sand! She teaches us to read data fast."} },
+    { id:"reef",     name:"Pattern Reef",    icon:"🐚", tag:"Patterns",    pool:["pattern","riddle"],
+      crew:{emoji:"🦜", name:"Echo the Parrot",  bio:"Echo repeats patterns all day! He teaches us to spot what comes next."} },
+    { id:"atoll",    name:"Average Atoll",   icon:"🍪", tag:"Fair Share",  pool:["share"],
+      crew:{emoji:"🦭", name:"Wally the Walrus", bio:"Wally shares snacks equally with everyone! He teaches us the average."} },
+    { id:"bay",      name:"Chance Bay",      icon:"🎲", tag:"Chance",      pool:["chance","guess"],
+      crew:{emoji:"🐱", name:"Lucky the Cat",    bio:"Lucky guesses, then checks to be sure! She teaches us about chance."} },
+    { id:"sands",    name:"Sorting Sands",   icon:"🏖️", tag:"Sorting",     pool:["sort","odd"],
+      crew:{emoji:"🦀", name:"Sandy the Crab",   bio:"Sandy sorts shells into neat piles! She teaches us to classify."} },
+    { id:"treasure", name:"Treasure Island", icon:"🏆", tag:"Everything!", pool:["count","compare","survey","pattern","chance","sort"],
+      crew:{emoji:"🗺️", name:"The Great Treasure", bio:"You sailed the whole sea! You are a true Research Captain! 🎉"} },
+  ];
+  let adventure = { active:false, island:null, goal:4, progress:0 };
   let ai = { provider:"anthropic", base:"", key:"", model:"" };
 
   function load(){ try{const r=localStorage.getItem(SAVE_KEY); if(r) Object.assign(state,JSON.parse(r));}catch(_){} try{const a=localStorage.getItem(AI_KEY); if(a) Object.assign(ai,JSON.parse(a));}catch(_){} }
@@ -45,7 +66,9 @@
   /* ---------------- DOM ---------------- */
   const $ = (id)=>document.getElementById(id);
   const el = {};
-  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen",
+  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen",
+   "voyageMap","voyageCrewBtn","homeCrewBtn","crewModal","closeCrew","crewGrid",
+   "recruit","recruitEmoji","recruitName","recruitBio","recruitJoin","recruitBtn","recruitConfetti",
    "soundToggle","voiceToggle","grownupBtn","savedBadge","homeStickersBtn","homeHowBtn",
    "introArt","introText","introDots","introSkip","introNext","introReplay",
    "storyList","storyTitle","storyScene","storyText","storyTakeaway","storyDots","storyPrev","storyNext","storyRepeat","bokeh","starStat",
@@ -158,15 +181,17 @@
   /* ============================================================
      SCREEN ROUTER
      ============================================================ */
-  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen"];
+  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen"];
   function showScreen(id){
     stopSpeak();
+    if(id!=="gameScreen") adventure.active=false;   // leaving a chapter ends adventure mode
     SCREENS.forEach(s=>el[s].classList.toggle("hidden", s!==id));
     const scr=el[id]; scr.classList.remove("anim"); void scr.offsetWidth; scr.classList.add("anim");
     if(id==="homeScreen") refreshHome();
     if(id==="introScreen") startIntro();
     if(id==="storyListScreen") buildStoryList();
     if(id==="teacherScreen") openTeacher();
+    if(id==="voyageScreen") buildVoyage();
     if(id==="gameScreen") enterGame();
   }
 
@@ -507,13 +532,8 @@
       layout:"row", options:opts.map(x=>({emojiBtn:x,correct:x===r.a})) };
   }
 
-  function dealExperiment(){
-    const d=diff(); const bag=["count","compare","guess","sort","riddle","odd","bignum"];
-    if(d.l>=2)bag.push("survey","seq");
-    if(d.l>=3)bag.push("pattern","survey","chartval");
-    if(d.l>=4)bag.push("share","chance","chartval");
-    if(d.l>=5)bag.push("chance","pattern","riddle","odd");
-    switch(pick(bag)){
+  function makeExp(key,d){
+    switch(key){
       case "compare":return expCompare(d); case "guess":return expGuess(d); case "sort":return expSort(d);
       case "survey":return expSurvey(d); case "pattern":return expPattern(d); case "share":return expShare(d);
       case "chance":return expChance(d); case "riddle":return expRiddle(d);
@@ -521,13 +541,32 @@
       case "chartval":return expChartValue(d); default:return expCount(d);
     }
   }
+  function dealExperiment(){
+    const d=diff();
+    if(adventure.active) return makeExp(pick(adventure.island.pool), d);
+    const bag=["count","compare","guess","sort","riddle","odd","bignum"];
+    if(d.l>=2)bag.push("survey","seq");
+    if(d.l>=3)bag.push("pattern","survey","chartval");
+    if(d.l>=4)bag.push("share","chance","chartval");
+    if(d.l>=5)bag.push("chance","pattern","riddle","odd");
+    return makeExp(pick(bag), d);
+  }
 
   /* ============================================================
      EXPERIMENT FLOW (with self-paced Discovery step)
      ============================================================ */
   let current=null, awaitingDraw=true, locked=false;
 
-  function enterGame(){ updateHud(); resetToDraw("Tap the card to start an experiment! 🎴", true); }
+  function enterGame(){
+    if(adventure.active){ updateChapterHud(); resetToDraw("Ahoy! Tap the card to explore "+adventure.island.name+"! ⛵", true); }
+    else { updateHud(); resetToDraw("Tap the card to start an experiment! 🎴", true); }
+  }
+  function updateChapterHud(){
+    el.starCount.textContent=state.stars;
+    el.levelNum.textContent=adventure.island.icon;
+    el.progressFill.style.width=Math.round((adventure.progress/adventure.goal)*100)+"%";
+    el.modeBadge.textContent="🏴‍☠️ "+adventure.island.name+" — 🪙 "+adventure.progress+"/"+adventure.goal;
+  }
 
   function showExperiment(ch){
     current=ch; awaitingDraw=false; locked=false; ch._revealed=false;
@@ -556,23 +595,30 @@
   }
 
   function onCorrect(ch){
-    sfx.correct(); state.stars+=1; state.progress+=1;
-    const leveled=state.progress>=STARS_PER_LEVEL; let newSticker=null;
-    if(leveled){ state.level+=1; state.progress=0; newSticker=grantSticker(); }
-    updateHud(); save();
-    showDiscovery(ch, leveled, newSticker);
+    sfx.correct(); state.stars+=1;
+    if(adventure.active){
+      adventure.progress+=1; updateChapterHud(); save();
+      const done=adventure.progress>=adventure.goal;
+      showDiscovery(ch, done?"Find the treasure! 🎉":"Sail on ▶", done?finishChapter:()=>resetToDraw("Tap the card for the next challenge! 🗺️", false));
+    } else {
+      state.progress+=1;
+      const leveled=state.progress>=STARS_PER_LEVEL; let newSticker=null;
+      if(leveled){ state.level+=1; state.progress=0; newSticker=grantSticker(); }
+      updateHud(); save();
+      showDiscovery(ch, leveled?"See your prize! 🎉":"Next ▶", leveled?()=>celebrate(newSticker):()=>resetToDraw("Tap the card for a new experiment! 🎴", false));
+    }
   }
 
-  // Self-paced: explanation stays until the child taps "Next"
-  function showDiscovery(ch, leveled, newSticker){
+  // Self-paced: explanation stays until the child taps Next
+  function showDiscovery(ch, label, nextAction){
     const card=document.createElement("div"); card.className="quest-card";
     const d=div("discovery");
     d.append(span("discovery-emoji","🔍"), div("discovery-title",pick(PRAISE)+" ⭐"), div("discovery-tip","Did you know? "+(ch.tip||"")));
     card.appendChild(d); el.cardSlot.replaceChildren(card);
-    el.modeBadge.textContent="🔍 Discovery!";
+    if(!adventure.active) el.modeBadge.textContent="🔍 Discovery!";
     el.answers.className="answers"; el.answers.replaceChildren();
-    const next=document.createElement("button"); next.className="big-btn play next-btn"; next.textContent= leveled?"See your prize! 🎉":"Next ▶";
-    next.addEventListener("click",()=>{ if(leveled) celebrate(newSticker); else resetToDraw("Tap the card for a new experiment! 🎴", false); });
+    const next=document.createElement("button"); next.className="big-btn play next-btn"; next.textContent=label;
+    next.addEventListener("click",nextAction);
     el.answers.appendChild(next);
     fox(pick(PRAISE)+" Did you know? "+(ch.tip||""));
   }
@@ -603,9 +649,60 @@
   function closeCelebrate(){ stopConfetti(); el.celebrate.classList.add("hidden"); el.celebrate.setAttribute("aria-hidden","true"); resetToDraw("New level! Tap the card to keep exploring! 🎴", true); }
 
   /* ---------------- confetti ---------------- */
-  let raf=null,pieces=[];
-  function runConfetti(){ const cv=el.confetti,ctx=cv.getContext("2d"); cv.width=window.innerWidth;cv.height=window.innerHeight; const cols=["#ffd166","#ff7eb6","#7dd3fc","#86efac","#a78bfa","#fef08a"]; pieces=Array.from({length:130},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height,r:5+Math.random()*8,c:pick(cols),vy:2+Math.random()*3,vx:-1.5+Math.random()*3,rot:Math.random()*Math.PI,vr:-0.15+Math.random()*0.3})); const draw=()=>{ctx.clearRect(0,0,cv.width,cv.height);pieces.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.rot+=p.vr;if(p.y>cv.height+20)p.y=-20;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);ctx.restore();});raf=requestAnimationFrame(draw);};draw(); }
-  function stopConfetti(){ if(raf)cancelAnimationFrame(raf);raf=null;const ctx=el.confetti.getContext("2d");ctx&&ctx.clearRect(0,0,el.confetti.width,el.confetti.height); }
+  let raf=null,pieces=[],confCanvas=null;
+  function runConfetti(cv){ cv=cv||el.confetti; confCanvas=cv; const ctx=cv.getContext("2d"); cv.width=window.innerWidth;cv.height=window.innerHeight; const cols=["#ffd166","#ff7eb6","#7dd3fc","#86efac","#a78bfa","#fef08a"]; pieces=Array.from({length:130},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height,r:5+Math.random()*8,c:pick(cols),vy:2+Math.random()*3,vx:-1.5+Math.random()*3,rot:Math.random()*Math.PI,vr:-0.15+Math.random()*0.3})); const draw=()=>{ctx.clearRect(0,0,cv.width,cv.height);pieces.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.rot+=p.vr;if(p.y>cv.height+20)p.y=-20;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);ctx.restore();});raf=requestAnimationFrame(draw);};draw(); }
+  function stopConfetti(){ if(raf)cancelAnimationFrame(raf);raf=null; if(confCanvas){const ctx=confCanvas.getContext("2d");ctx&&ctx.clearRect(0,0,confCanvas.width,confCanvas.height);} }
+
+  /* ---------------- GRAND VOYAGE ---------------- */
+  function islandStatus(i){ if(state.crew.includes(ISLANDS[i].id)) return "done"; if(i===state.islandIndex) return "current"; return i<state.islandIndex?"done":"locked"; }
+  function buildVoyage(){
+    const inner=div("voyage-inner");
+    ISLANDS.forEach((isl,i)=>{
+      const st=islandStatus(i);
+      const node=div("island-node "+st); node.tabIndex=0; node.setAttribute("role","button");
+      node.append(span("isl-emoji",isl.icon));
+      const info=div("isl-info");
+      info.append(div("isl-name",isl.name), div("isl-tag","✨ "+isl.tag),
+        div("isl-status", st==="done"?("✅ "+ (ISLANDS[i].crew.emoji) +" recruited"): st==="current"?"▶ Play now!":"🔒 Locked"));
+      node.appendChild(info);
+      if(st==="done") node.appendChild(span("isl-flag","🚩"));
+      if(st==="current") node.appendChild(span("isl-ship","⛵"));
+      const go=()=>{ if(st==="locked"){ node.classList.remove("anim"); void node.offsetWidth; sfx.wrong(); fox(""); speak("Finish the island before this one first!"); } else startChapter(isl); };
+      node.addEventListener("click",go);
+      node.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});
+      inner.appendChild(node);
+    });
+    el.voyageMap.replaceChildren(inner);
+  }
+  function startChapter(isl){
+    adventure={active:true, island:isl, goal:4, progress:0};
+    SCREENS.forEach(s=>el[s].classList.toggle("hidden", s!=="gameScreen"));
+    const scr=el.gameScreen; scr.classList.remove("anim"); void scr.offsetWidth; scr.classList.add("anim");
+    enterGame();
+  }
+  function finishChapter(){
+    const isl=adventure.island;
+    if(!state.crew.includes(isl.id)) state.crew.push(isl.id);
+    const i=ISLANDS.findIndex(x=>x.id===isl.id);
+    if(i+1>state.islandIndex) state.islandIndex=Math.min(i+1, ISLANDS.length-1);
+    adventure.active=false; save();
+    el.recruitEmoji.textContent=isl.crew.emoji;
+    el.recruitName.textContent="🎉 "+isl.crew.name;
+    el.recruitBio.textContent=isl.crew.bio;
+    el.recruitJoin.textContent= isl.id==="treasure" ? "You finished the Grand Voyage! 🏆" : "joined your crew! 🎉";
+    el.recruit.classList.remove("hidden"); el.recruit.setAttribute("aria-hidden","false");
+    sfx.levelUp(); foxCheer(); speak(isl.crew.name+"! "+isl.crew.bio); runConfetti(el.recruitConfetti);
+  }
+  function closeRecruit(){ stopConfetti(); el.recruit.classList.add("hidden"); el.recruit.setAttribute("aria-hidden","true"); showScreen("voyageScreen"); }
+  function openCrew(){
+    el.crewGrid.replaceChildren(...ISLANDS.map(isl=>{
+      const got=state.crew.includes(isl.id);
+      const c=div("crew-cell "+(got?"got":"locked"));
+      c.append(span("cc-emoji",got?isl.crew.emoji:"❔"), div("cc-name",got?isl.crew.name.split(" ")[0]:"???"));
+      return c;
+    }));
+    el.crewModal.classList.remove("hidden");
+  }
 
   /* ---------------- home / stickers / settings ---------------- */
   function refreshHome(){ if(state.stars>0){el.savedBadge.classList.remove("hidden");el.savedBadge.textContent=`⭐ ${state.stars} stars • Level ${state.level} • ${state.stickers.length} stickers`;} else el.savedBadge.classList.add("hidden"); }
@@ -624,6 +721,12 @@
     document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{ ensureAudio(); showScreen(b.getAttribute("data-go")); }));
     el.homeStickersBtn.addEventListener("click",openStickers);
     el.homeHowBtn.addEventListener("click",()=>el.howModal.classList.remove("hidden"));
+    el.homeCrewBtn.addEventListener("click",openCrew);
+    el.voyageCrewBtn.addEventListener("click",openCrew);
+    el.closeCrew.addEventListener("click",()=>el.crewModal.classList.add("hidden"));
+    el.crewModal.addEventListener("click",e=>{if(e.target===el.crewModal)el.crewModal.classList.add("hidden");});
+    el.recruitBtn.addEventListener("click",closeRecruit);
+    el.recruit.addEventListener("click",e=>{if(e.target===el.recruit)closeRecruit();});
 
     // intro
     el.introNext.addEventListener("click",introNext);
@@ -668,7 +771,7 @@
     if("speechSynthesis"in window)window.speechSynthesis.getVoices();
 
     // expose generators for tests (harmless in browser)
-    window.__foxytest={dealExperiment,diff,state,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,expBigNumber,expSeqNumber,expOddOne,expChartValue,buildOption,bestMatch};
+    window.__foxytest={dealExperiment,diff,state,makeExp,ISLANDS,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,expBigNumber,expSeqNumber,expOddOne,expChartValue,buildOption,bestMatch};
   }
 
   document.addEventListener("DOMContentLoaded",init);

@@ -26,11 +26,13 @@
       <p class="subtitle">Pick something fun to do!</p>
 
       <div class="menu-grid">
-        <button class="menu-btn" data-go="introScreen"><span class="menu-emoji">🎬</span><span>Meet Foxy</span></button>
-        <button class="menu-btn primary" data-go="gameScreen"><span class="menu-emoji">🧪</span><span>Experiments</span></button>
+        <button class="menu-btn primary" data-go="voyageScreen"><span class="menu-emoji">🏴‍☠️</span><span>Grand Voyage</span></button>
+        <button class="menu-btn" data-go="gameScreen"><span class="menu-emoji">🧪</span><span>Experiments</span></button>
         <button class="menu-btn" data-go="storyListScreen"><span class="menu-emoji">📖</span><span>Story Time</span></button>
         <button class="menu-btn" data-go="teacherScreen"><span class="menu-emoji">👩‍🏫</span><span>Ask Teacher</span></button>
-        <button class="menu-btn" id="homeStickersBtn"><span class="menu-emoji">🎟️</span><span>My Stickers</span></button>
+        <button class="menu-btn" data-go="introScreen"><span class="menu-emoji">🎬</span><span>Meet Foxy</span></button>
+        <button class="menu-btn" id="homeCrewBtn"><span class="menu-emoji">🧑‍🤝‍🧑</span><span>My Crew</span></button>
+        <button class="menu-btn" id="homeStickersBtn"><span class="menu-emoji">🎟️</span><span>Stickers</span></button>
         <button class="menu-btn" id="homeHowBtn"><span class="menu-emoji">❓</span><span>How to play</span></button>
       </div>
 
@@ -42,6 +44,17 @@
       <div id="savedBadge" class="saved-badge hidden"></div>
     </div>
     <p class="grown-up-note">For little learners aged 4–6. Foxy reads everything aloud. Big ideas from real research — made tiny, cute, and simple. 💛</p>
+  </section>
+
+  <!-- ===================== VOYAGE MAP ===================== -->
+  <section id="voyageScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">🏴‍☠️ Foxy's Grand Voyage</span>
+      <button id="voyageCrewBtn" class="icon-btn" aria-label="My crew">🧑‍🤝‍🧑</button>
+    </header>
+    <p class="sub-hint">Sail to each island, beat the challenge, and welcome a new crewmate aboard! ⛵</p>
+    <div id="voyageMap" class="voyage-map"></div>
   </section>
 
   <!-- ===================== INTRO ===================== -->
@@ -192,6 +205,28 @@
         <button id="aiClose" class="pill-btn">Close</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===================== CREW MODAL ===================== -->
+  <div id="crewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="crewTitle">
+    <div class="modal-card">
+      <h2 id="crewTitle">🧑‍🤝‍🧑 My Crew</h2>
+      <p class="muted">Recruit a new crewmate on every island of the Grand Voyage!</p>
+      <div id="crewGrid" class="crew-grid"></div>
+      <button id="closeCrew" class="big-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- ===================== RECRUIT OVERLAY ===================== -->
+  <div id="recruit" class="celebrate hidden" aria-hidden="true">
+    <div class="celebrate-card">
+      <div id="recruitEmoji" class="celebrate-badge">🐧</div>
+      <h2 id="recruitName">New crewmate!</h2>
+      <p id="recruitBio"></p>
+      <p class="muted small" id="recruitJoin">joined your crew! 🎉</p>
+      <button id="recruitBtn" class="big-btn play">Welcome aboard! ▶</button>
+    </div>
+    <canvas id="recruitConfetti" class="confetti-canvas"></canvas>
   </div>
 
   <!-- ===================== CELEBRATION ===================== -->
