@@ -220,10 +220,47 @@ textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); ou
 .modal-card label { display: block; margin: 14px 0 6px; font-size: 13px; font-weight: 600; }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 
+/* Results head actions */
+.results-head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Evidence stats grid */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.stat-pill { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.stat-pill .v { font-size: 20px; font-weight: 700; color: var(--accent); }
+.stat-pill .k { font-size: 12px; color: var(--muted); }
+
+/* Appraisal checklist */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.check-item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+.check-item .mark { font-size: 16px; line-height: 1.4; flex-shrink: 0; }
+.check-item .ctext strong { display: block; font-size: 14px; }
+.check-item .ctext span { font-size: 12px; color: var(--muted); }
+.score-badge { font-weight: 700; }
+
+/* Ask the paper */
+.ask-row { display: flex; gap: 8px; margin: 10px 0; }
+.ask-row input { flex: 1; }
+.ask-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.ask-suggestions .chip { cursor: pointer; }
+.ask-suggestions .chip:hover { border-color: var(--accent); }
+.ask-thread { display: flex; flex-direction: column; gap: 12px; }
+.qa { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--bg-soft); }
+.qa .q { font-weight: 600; margin-bottom: 6px; }
+.qa .a { font-size: 14px; }
+
+/* Library */
+.library-panel { margin-top: 26px; }
+.lib-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.lib-item:last-child { border-bottom: none; }
+.lib-item .lib-title { font-weight: 600; }
+.lib-item .lib-meta { font-size: 12px; color: var(--muted); }
+.lib-item .lib-actions { margin-left: auto; display: flex; gap: 8px; }
+
 /* Footer */
 .site-footer { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 20px 50px; }
 
 @media (max-width: 720px) {
   .cards { grid-template-columns: 1fr; }
   .card.wide { grid-column: auto; }
+  .check-grid { grid-template-columns: 1fr; }
 }

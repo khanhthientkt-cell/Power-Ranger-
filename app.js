@@ -210,6 +210,80 @@
     return scored.slice(0, limit).map((x) => x.s);
   }
 
+  function extractAcronyms(text) {
+    const found = {};
+    // Pattern: "Some Full Form (ACR)" — expansion before the parenthesised acronym
+    const defRe = /([A-Z][\w-]+(?:\s+[A-Za-z][\w-]+){0,5})\s+\(([A-Z][A-Za-z]*[A-Z][A-Za-z0-9]{0,5})\)/g;
+    let m;
+    while ((m = defRe.exec(text)) !== null) {
+      const acr = m[2];
+      const words = m[1].trim().split(/\s+/);
+      // Heuristic: expansion should have at least as many words as the acronym has letters (roughly)
+      const letters = acr.replace(/[^A-Z]/g, "").length;
+      const expansion = words.slice(-Math.min(words.length, letters + 2)).join(" ");
+      if (!found[acr]) found[acr] = { acronym: acr, expansion, count: 0 };
+    }
+    // Count occurrences of every acronym-like token (2-6 uppercase letters/digits)
+    const tokens = text.match(/\b[A-Z][A-Z0-9]{1,5}\b/g) || [];
+    const counts = {};
+    for (const t of tokens) counts[t] = (counts[t] || 0) + 1;
+    // Add frequent standalone acronyms not already captured
+    for (const [t, c] of Object.entries(counts)) {
+      if (c >= 2 && !/^(THE|AND|FOR|WITH|THIS|THAT|FROM|WERE|HTTP|HTTPS|PDF|DOI|II|III|IV)$/.test(t)) {
+        if (found[t]) found[t].count = c;
+        else found[t] = { acronym: t, expansion: "", count: c };
+      }
+    }
+    // Fill counts for defined ones missing it
+    for (const k of Object.keys(found)) if (!found[k].count) found[k].count = counts[k] || 1;
+    return Object.values(found)
+      .filter((a) => a.expansion || a.count >= 2)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 30);
+  }
+
+  function scanEvidence(text) {
+    const uniq = (re) => Array.from(new Set(text.match(re) || []));
+    const pValues = text.match(/\bp\s*[<>=]\s*0?\.\d+/gi) || [];
+    const sampleSizes = text.match(/\bn\s*=\s*\d[\d,]*/gi) || [];
+    const cis = text.match(/\b\d{2,3}\s*%\s*CI\b/gi) || text.match(/confidence interval/gi) || [];
+    const ciCount = (text.match(/\b\d{2,3}\s*%\s*CI\b/gi) || []).length + (text.match(/confidence intervals?/gi) || []).length;
+    const figures = uniq(/\bfig(?:ure)?\.?\s*\d+/gi).length;
+    const tables = uniq(/\btable\s*\d+/gi).length;
+    const equations = uniq(/\b(?:eq(?:uation)?\.?\s*)\(?\d+\)?/gi).length;
+    const effectSizes = (text.match(/\b(cohen'?s\s*d|odds ratio|hazard ratio|\bOR\s*=|\bRR\s*=|\bη2|\beta\^?2|\br\s*=\s*[-0]?\.\d+|R\^?2\s*=)/gi) || []).length;
+    return {
+      pValues: pValues.length,
+      pValueExamples: Array.from(new Set(pValues)).slice(0, 4),
+      sampleSizes: sampleSizes.length,
+      sampleExamples: Array.from(new Set(sampleSizes)).slice(0, 4),
+      confidenceIntervals: ciCount,
+      effectSizes,
+      figures,
+      tables,
+      equations,
+    };
+  }
+
+  function criticalAppraisal(text) {
+    const t = text;
+    const checks = [
+      { key: "Research question / hypothesis", re: /\b(hypothes\w+|research question|we (aim|investigate|propose|ask|hypothesize)|objective of (this|the) (study|paper)|address(es)? the (question|problem))\b/i, hint: "States what the paper sets out to answer" },
+      { key: "Methods described", re: /\b(method(s|ology)?|materials and methods|experimental setup|procedure|we (trained|measured|collected|conducted))\b/i, hint: "Explains how the work was done" },
+      { key: "Sample / participants / data", re: /\b(participants?|subjects?|sample size|\bn\s*=\s*\d|datasets?|benchmark|corpus|corpora|cohort|respondents?)\b/i, hint: "Describes the data or population studied" },
+      { key: "Statistical analysis", re: /\b(statistical|significan\w+|p\s*[<>=]\s*0?\.\d|regression|t-test|anova|confidence interval|standard deviation)\b/i, hint: "Reports quantitative analysis" },
+      { key: "Limitations acknowledged", re: /\b(limitation|caveat|shortcoming|drawback|threats? to validity)\b/i, hint: "Discusses weaknesses honestly" },
+      { key: "Future work", re: /\b(future (work|research|directions|studies)|further (study|research|investigation))\b/i, hint: "Points to next steps" },
+      { key: "Funding disclosed", re: /\b(fund(ing|ed)|grant\s*(no|number|#)?|financial support|supported by)\b/i, hint: "States who paid for the research" },
+      { key: "Ethics / consent", re: /\b(ethic\w*|IRB|institutional review|informed consent|ethics committee|declaration of helsinki)\b/i, hint: "Notes ethical approval (esp. human/animal studies)" },
+      { key: "Data availability", re: /\b(data (are|is)? ?(publicly )?availab\w+|available (at|on|upon request)|data availability|zenodo|figshare|dryad|osf\.io)\b/i, hint: "Says where the data can be found" },
+      { key: "Code / reproducibility", re: /\b(code (is )?available|source code|github\.com|gitlab\.com|open[- ]?source|reproduc\w+|replicat\w+)\b/i, hint: "Enables others to reproduce results" },
+    ];
+    const results = checks.map((c) => ({ key: c.key, hint: c.hint, found: c.re.test(t) }));
+    const score = results.filter((r) => r.found).length;
+    return { items: results, score, total: checks.length };
+  }
+
   function analyze(text) {
     const cleanWords = text.match(/[A-Za-z][A-Za-z\-']*/g) || [];
     const wordCount = cleanWords.length;
@@ -248,6 +322,9 @@
       sentences: topSentences(text, 6),
       references: refs,
       citationCount: countCitations(text),
+      acronyms: extractAcronyms(text),
+      evidence: scanEvidence(text),
+      appraisal: criticalAppraisal(text),
     };
   }
 
@@ -313,6 +390,47 @@
       </div>
       <p class="muted small">Avg ${a.avgWordsPerSentence} words/sentence across ${a.sentenceCount.toLocaleString()} sentences. Lower reading-ease and higher grade are typical for technical papers.</p>
     `;
+
+    // Acronyms
+    $("acronymsBody").innerHTML = a.acronyms.length
+      ? a.acronyms.map((x) =>
+          `<div class="struct-item">
+            <span class="name">${escapeHtml(x.acronym)}</span>
+            <span style="flex:1;color:var(--muted);font-size:13px;">${x.expansion ? escapeHtml(x.expansion) : "<em>used in text</em>"}</span>
+            <span class="meta">×${x.count}</span>
+          </div>`
+        ).join("")
+      : `<p class="muted">No acronyms detected.</p>`;
+
+    // Evidence & statistics
+    const ev = a.evidence;
+    $("evidenceBody").innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-pill"><div class="v">${ev.pValues}</div><div class="k">p-values</div></div>
+        <div class="stat-pill"><div class="v">${ev.sampleSizes}</div><div class="k">sample sizes (n=)</div></div>
+        <div class="stat-pill"><div class="v">${ev.confidenceIntervals}</div><div class="k">confidence intervals</div></div>
+        <div class="stat-pill"><div class="v">${ev.effectSizes}</div><div class="k">effect sizes</div></div>
+        <div class="stat-pill"><div class="v">${ev.figures}</div><div class="k">figures</div></div>
+        <div class="stat-pill"><div class="v">${ev.tables}</div><div class="k">tables</div></div>
+        <div class="stat-pill"><div class="v">${ev.equations}</div><div class="k">equations</div></div>
+      </div>
+      ${(ev.pValueExamples.length || ev.sampleExamples.length)
+        ? `<p class="muted small" style="margin-top:10px;">${[...ev.pValueExamples, ...ev.sampleExamples].map(escapeHtml).join(" · ")}</p>`
+        : ""}`;
+
+    // Critical appraisal
+    const ap = a.appraisal;
+    $("appraisalScore").textContent = `${ap.score} / ${ap.total} signals present`;
+    $("appraisalBody").innerHTML =
+      `<div class="check-grid">` +
+      ap.items.map((c) =>
+        `<div class="check-item">
+          <span class="mark">${c.found ? "✅" : "⬜"}</span>
+          <span class="ctext"><strong>${escapeHtml(c.key)}</strong><span>${escapeHtml(c.hint)}</span></span>
+        </div>`
+      ).join("") +
+      `</div>
+      <p class="muted small" style="margin-top:10px;">Heuristic keyword scan — a missing item may simply use different wording. Use as a reading aid, not a verdict.</p>`;
 
     // Highlight sentences
     $("sentencesBody").innerHTML = a.sentences.length
@@ -427,6 +545,15 @@
     md += `- Flesch–Kincaid grade: ${a.fkGrade}\n- Gunning Fog: ${a.fog}\n\n`;
     md += `## Structure\n`;
     a.sections.forEach((s) => { md += `- ${s.found ? "✅" : "⬜"} ${s.key}${s.found ? ` (${s.words} words)` : ""}\n`; });
+    md += `\n## Critical appraisal (${a.appraisal.score}/${a.appraisal.total})\n`;
+    a.appraisal.items.forEach((c) => { md += `- ${c.found ? "✅" : "⬜"} ${c.key}\n`; });
+    const ev = a.evidence;
+    md += `\n## Evidence & statistics\n`;
+    md += `- p-values: ${ev.pValues}\n- Sample sizes (n=): ${ev.sampleSizes}\n- Confidence intervals: ${ev.confidenceIntervals}\n`;
+    md += `- Effect sizes: ${ev.effectSizes}\n- Figures: ${ev.figures}\n- Tables: ${ev.tables}\n- Equations: ${ev.equations}\n`;
+    if (a.acronyms.length) {
+      md += `\n## Acronyms\n${a.acronyms.map((x) => `- **${x.acronym}**${x.expansion ? " — " + x.expansion : ""} (×${x.count})`).join("\n")}\n`;
+    }
     md += `\n## Key terms\n${a.keywords.map((k) => `${k.word} (${k.count})`).join(", ")}\n\n`;
     md += `## Highlight sentences\n${a.sentences.map((s) => `- ${s}`).join("\n")}\n\n`;
     if (a.aiSummary) md += `## AI Summary\n${a.aiSummary}\n\n`;
@@ -439,6 +566,140 @@
     link.download = (a.title.slice(0, 50).replace(/[^\w]+/g, "_") || "paper") + "_analysis.md";
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  // ===================================================================
+  //  ASK THE PAPER (AI Q&A)
+  // ===================================================================
+  const SUGGESTED_QUESTIONS = [
+    "What problem does this paper solve?",
+    "What are the main findings?",
+    "What methods did they use?",
+    "What are the limitations?",
+    "What data or dataset was used?",
+    "How is this different from prior work?",
+  ];
+
+  function renderAskSuggestions() {
+    $("askSuggestions").innerHTML = SUGGESTED_QUESTIONS
+      .map((q) => `<span class="chip" data-q="${escapeHtml(q)}">${escapeHtml(q)}</span>`)
+      .join("");
+    $("askSuggestions").querySelectorAll(".chip").forEach((el) => {
+      el.addEventListener("click", () => { $("askInput").value = el.dataset.q; askQuestion(); });
+    });
+  }
+
+  async function askQuestion() {
+    const q = $("askInput").value.trim();
+    if (!q) return;
+    if (!currentText) { setStatus("Analyze a paper first.", "error"); return; }
+    const key = localStorage.getItem(LS_KEY);
+    if (!key) { openSettings(); setStatus("Add a Claude API key to ask questions.", "error"); return; }
+    const model = localStorage.getItem(LS_MODEL) || "claude-sonnet-4-6";
+    const thread = $("askThread");
+    const item = document.createElement("div");
+    item.className = "qa";
+    item.innerHTML = `<div class="q">❓ ${escapeHtml(q)}</div><div class="a"><span class="spinner"></span> Thinking…</div>`;
+    thread.prepend(item);
+    $("askInput").value = "";
+    $("askBtn").disabled = true;
+
+    const prompt =
+      "Answer the question using ONLY the paper text below. If the answer is not in the text, say so clearly. Be concise and cite the relevant section when possible.\n\n" +
+      "QUESTION: " + q + "\n\nPAPER TEXT:\n" + currentText.slice(0, 24000);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({ model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
+      });
+      if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const data = await res.json();
+      const answer = (data.content || []).map((b) => b.text || "").join("\n");
+      item.querySelector(".a").innerHTML = `<div class="ai-content">${miniMarkdown(answer)}</div>`;
+    } catch (err) {
+      item.querySelector(".a").innerHTML = `<span class="status error">Failed: ${escapeHtml(err.message)}</span>`;
+    } finally {
+      $("askBtn").disabled = false;
+    }
+  }
+
+  // ===================================================================
+  //  PAPER LIBRARY (localStorage)
+  // ===================================================================
+  const LIB_KEY = "paperlens_library";
+  function loadLibrary() {
+    try { return JSON.parse(localStorage.getItem(LIB_KEY) || "[]"); } catch { return []; }
+  }
+  function saveLibrary(lib) {
+    try { localStorage.setItem(LIB_KEY, JSON.stringify(lib)); return true; }
+    catch { setStatus("Library is full — delete some saved papers.", "error"); return false; }
+  }
+  function saveCurrentToLibrary() {
+    if (!currentAnalysis) return;
+    const lib = loadLibrary();
+    if (lib.some((p) => p.title === currentAnalysis.title && p.wordCount === currentAnalysis.wordCount)) {
+      setStatus("This paper is already in your library.", "success");
+      return;
+    }
+    lib.unshift({
+      id: Date.now(),
+      title: currentAnalysis.title,
+      date: new Date().toISOString(),
+      wordCount: currentAnalysis.wordCount,
+      analysis: currentAnalysis,
+      text: currentText.slice(0, 60000),
+    });
+    while (lib.length > 25) lib.pop();
+    if (saveLibrary(lib)) setStatus("Saved to library.", "success");
+  }
+  function renderLibrary() {
+    const lib = loadLibrary();
+    const list = $("libraryList");
+    if (!lib.length) {
+      list.innerHTML = `<p class="muted">No saved papers yet. Analyze a paper, then click “⭐ Save to library”.</p>`;
+      return;
+    }
+    list.innerHTML = lib.map((p) =>
+      `<div class="lib-item">
+        <div>
+          <div class="lib-title">${escapeHtml(p.title)}</div>
+          <div class="lib-meta">${new Date(p.date).toLocaleDateString()} · ${p.wordCount.toLocaleString()} words</div>
+        </div>
+        <div class="lib-actions">
+          <button class="btn ghost small" data-open="${p.id}">Open</button>
+          <button class="btn ghost small danger" data-del="${p.id}">Delete</button>
+        </div>
+      </div>`
+    ).join("");
+    list.querySelectorAll("[data-open]").forEach((b) =>
+      b.addEventListener("click", () => openFromLibrary(Number(b.dataset.open)))
+    );
+    list.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", () => {
+        saveLibrary(loadLibrary().filter((p) => p.id !== Number(b.dataset.del)));
+        renderLibrary();
+      })
+    );
+  }
+  function openFromLibrary(id) {
+    const p = loadLibrary().find((x) => x.id === id);
+    if (!p) return;
+    currentAnalysis = p.analysis;
+    currentText = p.text || "";
+    textInput.value = currentText;
+    render(currentAnalysis);
+    $("summaryBody").innerHTML =
+      `<p class="muted">Add your Claude API key in <strong>AI Settings</strong> to generate a plain-language summary.</p>`;
+    $("askThread").innerHTML = "";
+    renderAskSuggestions();
+    $("libraryPanel").classList.add("hidden");
+    setStatus(`Opened "${p.title}" from library.`, "success");
   }
 
   // ===================================================================
@@ -460,6 +721,9 @@
         // Reset AI summary card
         $("summaryBody").innerHTML =
           `<p class="muted">Add your Claude API key in <strong>AI Settings</strong> to generate a plain-language summary, key contributions, and limitations.</p>`;
+        // Reset Ask-the-paper
+        $("askThread").innerHTML = "";
+        renderAskSuggestions();
         setStatus(`Done. Analyzed ${currentAnalysis.wordCount.toLocaleString()} words.`, "success");
       } catch (err) {
         console.error(err);
@@ -478,6 +742,21 @@
   });
   $("exportBtn").addEventListener("click", exportReport);
   $("aiSummaryBtn").addEventListener("click", generateAISummary);
+
+  // Ask the paper
+  $("askBtn").addEventListener("click", askQuestion);
+  $("askInput").addEventListener("keydown", (e) => { if (e.key === "Enter") askQuestion(); });
+
+  // Library
+  $("saveLibraryBtn").addEventListener("click", saveCurrentToLibrary);
+  $("libraryBtn").addEventListener("click", () => {
+    renderLibrary();
+    $("libraryPanel").classList.toggle("hidden");
+    if (!$("libraryPanel").classList.contains("hidden")) {
+      $("libraryPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+  $("closeLibraryBtn").addEventListener("click", () => $("libraryPanel").classList.add("hidden"));
 
   // File handling
   dropzone.addEventListener("click", () => fileInput.click());

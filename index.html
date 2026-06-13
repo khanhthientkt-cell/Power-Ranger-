@@ -18,6 +18,7 @@
       </div>
     </div>
     <nav class="header-actions">
+      <button id="libraryBtn" class="btn ghost" title="Saved papers">📚 Library</button>
       <button id="settingsBtn" class="btn ghost" title="AI settings">⚙ AI Settings</button>
       <button id="sampleBtn" class="btn ghost" title="Load a sample paper">📄 Try a sample</button>
     </nav>
@@ -46,11 +47,23 @@
       </div>
     </section>
 
+    <!-- Library panel -->
+    <section id="libraryPanel" class="panel library-panel hidden">
+      <div class="results-head">
+        <h2>📚 Saved papers</h2>
+        <button id="closeLibraryBtn" class="btn ghost small">Close</button>
+      </div>
+      <div id="libraryList"></div>
+    </section>
+
     <!-- Results -->
     <section id="results" class="results hidden" aria-live="polite">
       <div class="results-head">
         <h2 id="paperTitle">Analysis</h2>
-        <button id="exportBtn" class="btn ghost small">⬇ Export report (.md)</button>
+        <div class="results-head-actions">
+          <button id="saveLibraryBtn" class="btn ghost small">⭐ Save to library</button>
+          <button id="exportBtn" class="btn ghost small">⬇ Export report (.md)</button>
+        </div>
       </div>
 
       <div class="metrics-grid" id="metricsGrid"></div>
@@ -81,9 +94,40 @@
           <div class="card-body" id="readabilityBody"></div>
         </article>
 
+        <article class="card" id="acronymsCard">
+          <div class="card-head"><h3>Acronyms &amp; abbreviations</h3></div>
+          <div class="card-body" id="acronymsBody"></div>
+        </article>
+
+        <article class="card" id="evidenceCard">
+          <div class="card-head"><h3>Evidence &amp; statistics</h3></div>
+          <div class="card-body" id="evidenceBody"></div>
+        </article>
+
+        <article class="card wide" id="appraisalCard">
+          <div class="card-head">
+            <h3>Critical appraisal</h3>
+            <span class="muted small" id="appraisalScore"></span>
+          </div>
+          <div class="card-body" id="appraisalBody"></div>
+        </article>
+
         <article class="card wide" id="sentencesCard">
           <div class="card-head"><h3>Highlight sentences</h3></div>
           <div class="card-body" id="sentencesBody"></div>
+        </article>
+
+        <article class="card wide" id="askCard">
+          <div class="card-head"><h3>Ask the paper</h3></div>
+          <div class="card-body">
+            <p class="muted small">Ask a question and Claude answers using only this paper's text. Requires an API key (AI Settings).</p>
+            <div class="ask-row">
+              <input type="text" id="askInput" placeholder="e.g. What dataset did they use? What are the limitations?" />
+              <button id="askBtn" class="btn primary">Ask</button>
+            </div>
+            <div class="ask-suggestions" id="askSuggestions"></div>
+            <div id="askThread" class="ask-thread"></div>
+          </div>
         </article>
 
         <article class="card wide" id="referencesCard">
