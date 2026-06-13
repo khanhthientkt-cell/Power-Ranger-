@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Count Quest 🦊 — A Math Card Game for Little Kids</title>
-  <meta name="description" content="Count Quest is a friendly card game that teaches counting, numbers, and more-or-less to kids aged 4–6. Draw a card, solve the puzzle, earn stars!" />
-  <meta name="theme-color" content="#ffd166" />
+  <title>Foxy's Tiny Lab 🦊🔬 — Count Quest</title>
+  <meta name="description" content="Foxy's Tiny Lab turns big science ideas into tiny, cute experiments for kids aged 4–6: guess & check, charts, patterns, sharing, and chance." />
+  <meta name="theme-color" content="#ffc9de" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>" />
 </head>
@@ -13,26 +13,34 @@
   <!-- ===================== START SCREEN ===================== -->
   <section id="startScreen" class="screen start-screen">
     <div class="start-card">
-      <div class="mascot big" aria-hidden="true">🦊</div>
-      <h1 class="title">Count Quest</h1>
-      <p class="subtitle">Draw a card • Solve the puzzle • Win stars!</p>
+      <div class="mascot-stage">
+        <span class="sparkle s1" aria-hidden="true">✨</span>
+        <span class="sparkle s2" aria-hidden="true">⭐</span>
+        <span class="sparkle s3" aria-hidden="true">✨</span>
+        <div class="mascot big" aria-hidden="true">🦊</div>
+        <div class="mascot-coat" aria-hidden="true">🔬</div>
+      </div>
+      <h1 class="title">Foxy's Tiny Lab</h1>
+      <p class="subtitle">Little experiments • Big discoveries • Tiny scientist!</p>
 
-      <button id="playBtn" class="big-btn play">▶ Play</button>
+      <button id="playBtn" class="big-btn play">▶ Start exploring</button>
 
       <div class="start-row">
         <button id="howBtn" class="pill-btn">❓ How to play</button>
-        <button id="soundToggle" class="pill-btn" aria-pressed="true">🔊 Sound: On</button>
-        <button id="voiceToggle" class="pill-btn" aria-pressed="true">🗣️ Voice: On</button>
+        <button id="stickersBtn" class="pill-btn">🎟️ My stickers</button>
+      </div>
+      <div class="start-row">
+        <button id="soundToggle" class="pill-btn" aria-pressed="true">🔊 Sound</button>
+        <button id="voiceToggle" class="pill-btn" aria-pressed="true">🗣️ Voice</button>
       </div>
 
       <div id="savedBadge" class="saved-badge hidden"></div>
     </div>
-    <p class="grown-up-note">Made for little learners aged 4–6 — no reading needed, the fox reads every question out loud. 💛</p>
+    <p class="grown-up-note">For little learners aged 4–6 — Foxy reads everything out loud. Each card is a tiny experiment that teaches real research thinking: <em>guess, count, compare, discover.</em> 💛</p>
   </section>
 
   <!-- ===================== GAME SCREEN ===================== -->
   <section id="gameScreen" class="screen game-screen hidden">
-    <!-- Top status bar -->
     <header class="hud">
       <button id="homeBtn" class="icon-btn" title="Back to start" aria-label="Back to start">🏠</button>
 
@@ -42,26 +50,28 @@
       </div>
 
       <div class="level-wrap">
-        <div class="level-label">Level <span id="levelNum">1</span></div>
+        <div class="level-label">🔬 Level <span id="levelNum">1</span></div>
         <div class="progress-track" aria-hidden="true">
           <div id="progressFill" class="progress-fill"></div>
         </div>
       </div>
 
-      <button id="repeatBtn" class="icon-btn" title="Hear the question again" aria-label="Hear the question again">🔁</button>
+      <button id="repeatBtn" class="icon-btn" title="Hear it again" aria-label="Hear it again">🔁</button>
     </header>
 
-    <!-- The drawn card -->
+    <!-- The little "experiment steps" ribbon: Guess → Find out → Discover -->
+    <div id="modeBadge" class="mode-badge">🧪 Experiment</div>
+
     <main class="play-area">
       <div id="speech" class="speech-bubble">
         <span class="speech-fox" aria-hidden="true">🦊</span>
-        <span id="speechText">Tap the card to begin!</span>
+        <span id="speechText">Tap the card to start an experiment!</span>
       </div>
 
       <div id="cardSlot" class="card-slot">
-        <button id="drawCard" class="quest-card card-back" aria-label="Draw a card">
+        <button id="drawCard" class="quest-card card-back" aria-label="Draw an experiment card">
           <span class="card-back-art">🎴</span>
-          <span class="card-back-text">Tap to draw</span>
+          <span class="card-back-text">Tap to explore</span>
         </button>
       </div>
 
@@ -72,26 +82,40 @@
   <!-- ===================== HOW TO PLAY ===================== -->
   <div id="howModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <div class="modal-card">
-      <h2 id="howTitle">How to play 🦊</h2>
+      <h2 id="howTitle">How to play 🦊🔬</h2>
       <ol class="how-list">
-        <li><span class="how-emoji">🎴</span> Tap the card to draw a puzzle.</li>
-        <li><span class="how-emoji">🧮</span> Count the pictures or pick more / fewer.</li>
-        <li><span class="how-emoji">👆</span> Tap the big answer button you think is right.</li>
-        <li><span class="how-emoji">⭐</span> Get it right to win a star and fill the bar.</li>
-        <li><span class="how-emoji">🎉</span> Fill the bar to LEVEL UP — it gets a little trickier!</li>
+        <li><span class="how-emoji">🎴</span> Tap the card to start a tiny experiment.</li>
+        <li><span class="how-emoji">🔮</span> Make a guess — that's what scientists do first!</li>
+        <li><span class="how-emoji">🔍</span> Count, compare, or find the pattern to discover the answer.</li>
+        <li><span class="how-emoji">⭐</span> Discover it to win a star and fill the bar.</li>
+        <li><span class="how-emoji">🎟️</span> Level up to collect a cute sticker!</li>
       </ol>
-      <p class="grown-up-tip"><strong>For grown-ups:</strong> Sit with your child the first few rounds. The fox reads each question aloud, so pre-readers can play on their own too. Tap 🔁 anytime to hear it again.</p>
-      <button id="closeHow" class="big-btn">Got it!</button>
+      <p class="grown-up-tip"><strong>For grown-ups:</strong> Every card secretly teaches a quantitative-research idea made tiny — making a guess (hypothesis), counting (data), reading a chart (visualization), most-common (mode), fair-sharing (average), patterns (trends), and chance (probability). Foxy explains each one in kid words. The goal: turn big ideas into little "aha!" moments.</p>
+      <button id="closeHow" class="big-btn">Let's go!</button>
     </div>
   </div>
 
-  <!-- ===================== CELEBRATION OVERLAY ===================== -->
+  <!-- ===================== STICKER BOOK ===================== -->
+  <div id="stickerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="stickerTitle">
+    <div class="modal-card">
+      <h2 id="stickerTitle">🎟️ My sticker book</h2>
+      <p class="muted">Collect a sticker every time you level up!</p>
+      <div id="stickerGrid" class="sticker-grid"></div>
+      <button id="closeStickers" class="big-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- ===================== CELEBRATION ===================== -->
   <div id="celebrate" class="celebrate hidden" aria-hidden="true">
     <div class="celebrate-card">
       <div id="celebrateBadge" class="celebrate-badge">🏆</div>
       <h2 id="celebrateTitle">Level Up!</h2>
-      <p id="celebrateText">You're a counting star!</p>
-      <button id="celebrateBtn" class="big-btn play">Keep going ▶</button>
+      <p id="celebrateText">You discovered something new!</p>
+      <div id="celebrateSticker" class="celebrate-sticker hidden">
+        <span class="muted small">New sticker!</span>
+        <div id="newSticker" class="new-sticker">⭐</div>
+      </div>
+      <button id="celebrateBtn" class="big-btn play">Keep exploring ▶</button>
     </div>
     <canvas id="confetti" class="confetti-canvas"></canvas>
   </div>
