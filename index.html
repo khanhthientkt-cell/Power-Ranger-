@@ -2,188 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PaperLens — Journal Paper Analyzer</title>
-  <meta name="description" content="Analyze journal papers: structure, key terms, readability, references, and AI summaries." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Count Quest 🦊 — A Math Card Game for Little Kids</title>
+  <meta name="description" content="Count Quest is a friendly card game that teaches counting, numbers, and more-or-less to kids aged 4–6. Draw a card, solve the puzzle, earn stars!" />
+  <meta name="theme-color" content="#ffd166" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <span class="logo" aria-hidden="true">🔬</span>
-      <div>
-        <h1>PaperLens</h1>
-        <p class="tagline">Read smarter. Analyze any journal paper in seconds.</p>
+  <!-- ===================== START SCREEN ===================== -->
+  <section id="startScreen" class="screen start-screen">
+    <div class="start-card">
+      <div class="mascot big" aria-hidden="true">🦊</div>
+      <h1 class="title">Count Quest</h1>
+      <p class="subtitle">Draw a card • Solve the puzzle • Win stars!</p>
+
+      <button id="playBtn" class="big-btn play">▶ Play</button>
+
+      <div class="start-row">
+        <button id="howBtn" class="pill-btn">❓ How to play</button>
+        <button id="soundToggle" class="pill-btn" aria-pressed="true">🔊 Sound: On</button>
+        <button id="voiceToggle" class="pill-btn" aria-pressed="true">🗣️ Voice: On</button>
       </div>
+
+      <div id="savedBadge" class="saved-badge hidden"></div>
     </div>
-    <nav class="header-actions">
-      <button id="libraryBtn" class="btn ghost" title="Saved papers">📚 Library</button>
-      <button id="settingsBtn" class="btn ghost" title="AI settings">⚙ AI Settings</button>
-      <button id="sampleBtn" class="btn ghost" title="Load a sample paper">📄 Try a sample</button>
-    </nav>
-  </header>
+    <p class="grown-up-note">Made for little learners aged 4–6 — no reading needed, the fox reads every question out loud. 💛</p>
+  </section>
 
-  <main>
-    <!-- Input panel -->
-    <section id="inputPanel" class="panel input-panel">
-      <h2>1. Add your paper</h2>
-      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a PDF or text file">
-        <div class="dropzone-inner">
-          <span class="drop-icon" aria-hidden="true">⬆</span>
-          <p><strong>Drop a PDF or .txt here</strong> or click to browse</p>
-          <p class="muted small">Your file is processed entirely in your browser. Nothing is uploaded unless you enable AI summaries.</p>
-        </div>
-        <input type="file" id="fileInput" accept=".pdf,.txt,text/plain,application/pdf" hidden />
+  <!-- ===================== GAME SCREEN ===================== -->
+  <section id="gameScreen" class="screen game-screen hidden">
+    <!-- Top status bar -->
+    <header class="hud">
+      <button id="homeBtn" class="icon-btn" title="Back to start" aria-label="Back to start">🏠</button>
+
+      <div class="hud-stat" title="Stars earned">
+        <span class="hud-icon">⭐</span>
+        <span id="starCount">0</span>
       </div>
 
-      <div class="or-divider"><span>or paste the text</span></div>
-      <textarea id="textInput" rows="8" placeholder="Paste the full text of a paper (title, abstract, sections, references)…"></textarea>
-
-      <div class="actions">
-        <button id="analyzeBtn" class="btn primary">Analyze paper</button>
-        <button id="clearBtn" class="btn ghost">Clear</button>
-        <span id="status" class="status" aria-live="polite"></span>
-      </div>
-    </section>
-
-    <!-- Library panel -->
-    <section id="libraryPanel" class="panel library-panel hidden">
-      <div class="results-head">
-        <h2>📚 Saved papers</h2>
-        <button id="closeLibraryBtn" class="btn ghost small">Close</button>
-      </div>
-      <div id="libraryList"></div>
-    </section>
-
-    <!-- Results -->
-    <section id="results" class="results hidden" aria-live="polite">
-      <div class="results-head">
-        <h2 id="paperTitle">Analysis</h2>
-        <div class="results-head-actions">
-          <button id="saveLibraryBtn" class="btn ghost small">⭐ Save to library</button>
-          <button id="exportBtn" class="btn ghost small">⬇ Export report (.md)</button>
+      <div class="level-wrap">
+        <div class="level-label">Level <span id="levelNum">1</span></div>
+        <div class="progress-track" aria-hidden="true">
+          <div id="progressFill" class="progress-fill"></div>
         </div>
       </div>
 
-      <div class="metrics-grid" id="metricsGrid"></div>
+      <button id="repeatBtn" class="icon-btn" title="Hear the question again" aria-label="Hear the question again">🔁</button>
+    </header>
 
-      <div class="cards">
-        <article class="card" id="summaryCard">
-          <div class="card-head">
-            <h3>AI Summary</h3>
-            <button id="aiSummaryBtn" class="btn primary small">Generate with Claude</button>
-          </div>
-          <div class="card-body" id="summaryBody">
-            <p class="muted">Add your Claude API key in <strong>AI Settings</strong> to generate a plain-language summary, key contributions, and limitations.</p>
-          </div>
-        </article>
-
-        <article class="card" id="structureCard">
-          <div class="card-head"><h3>Structure (IMRaD)</h3></div>
-          <div class="card-body" id="structureBody"></div>
-        </article>
-
-        <article class="card" id="keywordsCard">
-          <div class="card-head"><h3>Key terms</h3></div>
-          <div class="card-body" id="keywordsBody"></div>
-        </article>
-
-        <article class="card" id="readabilityCard">
-          <div class="card-head"><h3>Readability</h3></div>
-          <div class="card-body" id="readabilityBody"></div>
-        </article>
-
-        <article class="card" id="acronymsCard">
-          <div class="card-head"><h3>Acronyms &amp; abbreviations</h3></div>
-          <div class="card-body" id="acronymsBody"></div>
-        </article>
-
-        <article class="card" id="evidenceCard">
-          <div class="card-head"><h3>Evidence &amp; statistics</h3></div>
-          <div class="card-body" id="evidenceBody"></div>
-        </article>
-
-        <article class="card wide" id="appraisalCard">
-          <div class="card-head">
-            <h3>Critical appraisal</h3>
-            <span class="muted small" id="appraisalScore"></span>
-          </div>
-          <div class="card-body" id="appraisalBody"></div>
-        </article>
-
-        <article class="card wide" id="sentencesCard">
-          <div class="card-head"><h3>Highlight sentences</h3></div>
-          <div class="card-body" id="sentencesBody"></div>
-        </article>
-
-        <article class="card wide" id="askCard">
-          <div class="card-head"><h3>Ask the paper</h3></div>
-          <div class="card-body">
-            <p class="muted small">Ask a question and the AI answers using only this paper's text. Requires an API key (AI Settings).</p>
-            <div class="ask-row">
-              <input type="text" id="askInput" placeholder="e.g. What dataset did they use? What are the limitations?" />
-              <button id="askBtn" class="btn primary">Ask</button>
-            </div>
-            <div class="ask-suggestions" id="askSuggestions"></div>
-            <div id="askThread" class="ask-thread"></div>
-          </div>
-        </article>
-
-        <article class="card wide" id="referencesCard">
-          <div class="card-head"><h3>References</h3></div>
-          <div class="card-body" id="referencesBody"></div>
-        </article>
+    <!-- The drawn card -->
+    <main class="play-area">
+      <div id="speech" class="speech-bubble">
+        <span class="speech-fox" aria-hidden="true">🦊</span>
+        <span id="speechText">Tap the card to begin!</span>
       </div>
-    </section>
-  </main>
 
-  <!-- Settings modal -->
-  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div id="cardSlot" class="card-slot">
+        <button id="drawCard" class="quest-card card-back" aria-label="Draw a card">
+          <span class="card-back-art">🎴</span>
+          <span class="card-back-text">Tap to draw</span>
+        </button>
+      </div>
+
+      <div id="answers" class="answers" role="group" aria-label="Choose your answer"></div>
+    </main>
+  </section>
+
+  <!-- ===================== HOW TO PLAY ===================== -->
+  <div id="howModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <div class="modal-card">
-      <h3 id="settingsTitle">AI Settings</h3>
-      <p class="muted small">
-        Optional. Enables AI summaries and Q&amp;A. Your key is stored only in this browser
-        (localStorage) and sent directly from your browser to the API you choose.
-      </p>
-
-      <label for="providerSelect">Provider</label>
-      <select id="providerSelect">
-        <option value="anthropic">Anthropic (Claude)</option>
-        <option value="openai">OpenAI-compatible (custom endpoint)</option>
-      </select>
-
-      <div id="baseUrlRow">
-        <label for="baseUrl">API base URL</label>
-        <input type="text" id="baseUrl" placeholder="https://api.anthropic.com" autocomplete="off" />
-      </div>
-
-      <label for="apiKey">API key</label>
-      <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
-
-      <label for="modelInput">Model</label>
-      <input type="text" id="modelInput" list="modelList" placeholder="model name" autocomplete="off" />
-      <datalist id="modelList">
-        <option value="claude-opus-4-8"></option>
-        <option value="claude-sonnet-4-6"></option>
-        <option value="claude-haiku-4-5-20251001"></option>
-      </datalist>
-
-      <p class="muted small" id="settingsHint" style="margin-top:10px;"></p>
-
-      <div class="modal-actions">
-        <button id="saveSettings" class="btn primary">Save</button>
-        <button id="closeSettings" class="btn ghost">Close</button>
-        <button id="clearKey" class="btn ghost danger">Remove key</button>
-      </div>
+      <h2 id="howTitle">How to play 🦊</h2>
+      <ol class="how-list">
+        <li><span class="how-emoji">🎴</span> Tap the card to draw a puzzle.</li>
+        <li><span class="how-emoji">🧮</span> Count the pictures or pick more / fewer.</li>
+        <li><span class="how-emoji">👆</span> Tap the big answer button you think is right.</li>
+        <li><span class="how-emoji">⭐</span> Get it right to win a star and fill the bar.</li>
+        <li><span class="how-emoji">🎉</span> Fill the bar to LEVEL UP — it gets a little trickier!</li>
+      </ol>
+      <p class="grown-up-tip"><strong>For grown-ups:</strong> Sit with your child the first few rounds. The fox reads each question aloud, so pre-readers can play on their own too. Tap 🔁 anytime to hear it again.</p>
+      <button id="closeHow" class="big-btn">Got it!</button>
     </div>
   </div>
 
-  <footer class="site-footer">
-    <p>PaperLens runs locally in your browser. Built for researchers, students, and reviewers.</p>
-  </footer>
+  <!-- ===================== CELEBRATION OVERLAY ===================== -->
+  <div id="celebrate" class="celebrate hidden" aria-hidden="true">
+    <div class="celebrate-card">
+      <div id="celebrateBadge" class="celebrate-badge">🏆</div>
+      <h2 id="celebrateTitle">Level Up!</h2>
+      <p id="celebrateText">You're a counting star!</p>
+      <button id="celebrateBtn" class="big-btn play">Keep going ▶</button>
+    </div>
+    <canvas id="confetti" class="confetti-canvas"></canvas>
+  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

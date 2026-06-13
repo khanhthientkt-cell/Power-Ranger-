@@ -1,77 +1,75 @@
-# 🔬 PaperLens — Journal Paper Analyzer
+# 🦊 Count Quest — a math card game for little kids (ages 4–6)
 
-A lightweight, **browser-based** tool that helps you analyze journal papers in seconds. Upload a PDF (or paste text) and instantly get structure detection, key terms, readability metrics, references, and — optionally — an AI summary powered by Claude.
+**Count Quest** is a friendly, browser-based card game that teaches young children the
+foundations of *quantitative thinking* — counting, recognising numbers, comparing
+**more vs. fewer**, matching a numeral to a quantity, and simple adding — all through
+a playful "draw a card, solve the puzzle, win a star" loop.
 
-No build step, no server. Just open `index.html`.
+No reading required. **Foxy the fox reads every question out loud**, so pre-readers
+can play on their own. No app store, no install, no build step — just open `index.html`.
 
-## ✨ Features
+> 🎯 Designed *with* and *for* little learners: huge tappable buttons, bright colours,
+> gentle mistakes, and lots of celebration.
 
-- **PDF & text input** — drag-and-drop a PDF or paste raw text. PDFs are parsed in-browser with [pdf.js](https://mozilla.github.io/pdf.js/).
-- **Structure detection (IMRaD)** — finds Abstract, Introduction, Methods, Results, Discussion, Conclusion, and References, with word counts.
-- **Key terms** — frequency-ranked keywords with stop-word filtering.
-- **Readability metrics** — Flesch Reading Ease, Flesch–Kincaid grade level, and Gunning Fog index.
-- **Reference extraction** — pulls and counts the reference list and in-text citations.
-- **Highlight sentences** — surfaces the most informative sentences (contributions, findings, conclusions).
-- **AI summary & Q&A (optional)** — generate a TL;DR, contributions, methods, findings, and limitations, and ask questions grounded in the paper. Works with the **Anthropic API** or any **OpenAI-compatible endpoint** (custom base URL), using your own key.
-- **Export** — download a full `.md` analysis report.
+## ✨ What kids learn
 
-## 🚀 Usage
+| Puzzle type | Skill it builds |
+|-------------|-----------------|
+| **How many?** | Counting objects & connecting a quantity to a number |
+| **Find this many** | Recognising written numerals and matching them to a group |
+| **Which has more?** | Comparing quantities (greater than) |
+| **Which has fewer?** | Comparing quantities (less than) |
+| **All together** *(unlocks at level 4)* | Simple addition within 10 |
 
-1. Open `index.html` in any modern browser.
-   - Or serve locally: `python3 -m http.server` then visit `http://localhost:8000`.
-2. Drop a PDF / paste text, or click **Try a sample**.
-3. Click **Analyze paper**.
-4. (Optional) Open **AI Settings**, paste your Anthropic API key, and click **Generate with Claude**.
+Difficulty scales gently with the child's level, so the puzzles always sit just above
+what they've already mastered.
 
-## 🤖 AI providers
+## 🎮 How to play
 
-Open **AI Settings** and choose a provider:
+1. **Tap the card** 🎴 to draw a puzzle.
+2. **Count the pictures** or pick the group with **more / fewer**.
+3. **Tap the big answer** you think is right.
+4. Get it right to **win a star** ⭐ and fill the progress bar.
+5. Fill the bar to **LEVEL UP** 🎉 — confetti and a new badge!
 
-- **Anthropic (Claude):** base URL `https://api.anthropic.com`, key `sk-ant-...`, model e.g. `claude-sonnet-4-6`.
-- **OpenAI-compatible:** any endpoint exposing `/chat/completions` (LiteLLM, vLLM, Ollama, gateways, etc.). Set the base URL (including `/v1`), your `Authorization: Bearer` key, and the model name.
+Wrong answers are gentle: Foxy gives a friendly nudge and lets the child try again.
 
-> ⚠️ **http endpoints:** A browser will **block** requests to an `http://` API from a page served over `https://` ("mixed content"). If your endpoint is http-only, open this site over **http** (e.g. run it locally) for the AI features to work, **or** deploy the built-in proxy (below). The non-AI analysis works everywhere.
+## 🚀 Run it
 
-## 🔌 Using a private http endpoint via the built-in proxy (Vercel)
+Just open `index.html` in any modern browser. Or serve it locally:
 
-If your AI endpoint is `http://` on a non-standard port and you can't change it, deploy this repo to **Vercel** — it includes a serverless proxy (`api/chat/completions.js`) that calls your endpoint server-side, so the browser only talks to https.
+```bash
+python3 -m http.server
+# then visit http://localhost:8000
+```
 
-1. Go to **vercel.com**, sign in with GitHub, **Add New → Project**, and import this repository.
-2. In the project's **Settings → Environment Variables**, add:
-   - `AI_TARGET_URL` = `http://211.20.245.95:21434/v1` (your endpoint, including `/v1`)
-3. Deploy. You'll get a URL like `https://your-project.vercel.app`.
-4. Open it → **AI Settings** → Provider **OpenAI-compatible** → **Base URL** = `/api` → paste your key → **Save**.
+Works great on tablets and phones (the best device for little fingers 👆).
 
-> This only works if your endpoint is reachable from the public internet. If it's restricted to a private/campus network, no external host (Vercel, Cloudflare, etc.) can reach it — use the Anthropic provider instead.
+## 👨‍👩‍👧 For grown-ups
 
-## 🔐 Privacy
-
-Everything runs locally in your browser. Your paper text is **never** sent anywhere unless you explicitly use an AI feature, in which case the text is sent directly from your browser to the API you configured. Your API key is stored only in your browser's `localStorage` — it is never committed to this repo or sent anywhere else.
-
-## ☁️ Deploy to Cloudflare Pages
-
-This is a static site, so no build step is required.
-
-1. Push this repo to GitHub (already done).
-2. In the [Cloudflare dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-3. Select this repository (`khanhthientkt-cell/power-ranger-`).
-4. Configure the build:
-   - **Production branch:** `claude/ecstatic-pascal-gmlpqf`
-   - **Framework preset:** `None`
-   - **Build command:** *(leave empty)*
-   - **Build output directory:** `/`
-5. Click **Save and Deploy**. Every push to the production branch redeploys automatically.
-
-Security headers (CSP, etc.) are configured in [`_headers`](./_headers).
+- **Sound** 🔊 and **Voice** 🗣️ can each be toggled on the start screen.
+- Progress (stars + level) is **saved in the browser** automatically, so kids can
+  pick up where they left off.
+- Honours the system **reduced-motion** setting for motion-sensitive children.
+- Everything runs **100% locally** — no accounts, no data collected, no internet
+  needed after the first load.
 
 ## 🛠 Tech
 
-Plain HTML, CSS, and vanilla JavaScript — zero dependencies to install. pdf.js is loaded from a CDN for PDF parsing.
+Plain HTML, CSS, and vanilla JavaScript — **zero dependencies**. Sound effects are
+synthesised with the Web Audio API and narration uses the browser's built-in speech
+synthesis, so there are no media files to download.
 
 ## 📁 Files
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Markup and layout |
-| `styles.css` | Styling (dark theme) |
-| `app.js` | Extraction, analysis, rendering, AI integration |
+| `index.html` | Game markup: start screen, game screen, celebration overlay |
+| `styles.css` | Big, bright, kid-friendly styling |
+| `app.js` | Game engine: puzzle generation, scoring, sound, voice, confetti |
+| `archive/paperlens/` | The previous project that used to live here (kept for reference) |
+
+## ☁️ Deploy (optional)
+
+It's a static site, so it hosts anywhere — GitHub Pages, Cloudflare Pages, Netlify,
+Vercel — with **no build command** and the output directory set to the repo root.
