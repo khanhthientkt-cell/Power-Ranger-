@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Foxy's Tiny Lab 🦊🔬 — Count Quest</title>
-  <meta name="description" content="Foxy's Tiny Lab turns big science ideas into tiny, cute experiments for kids aged 4–6: guess & check, charts, patterns, sharing, and chance." />
+  <title>Foxy's Tiny Lab 🦊🔬 — Learn research the fun way!</title>
+  <meta name="description" content="Foxy's Tiny Lab: a cute world where kids 4–6 learn research thinking through experiments, story legends, riddles, and a friendly teacher fox." />
   <meta name="theme-color" content="#ffc9de" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>" />
 </head>
 <body>
-  <!-- ===================== START SCREEN ===================== -->
-  <section id="startScreen" class="screen start-screen">
-    <div class="start-card">
+
+  <!-- ===================== HOME ===================== -->
+  <section id="homeScreen" class="screen home-screen">
+    <div class="home-card">
       <div class="mascot-stage">
         <span class="sparkle s1" aria-hidden="true">✨</span>
         <span class="sparkle s2" aria-hidden="true">⭐</span>
@@ -21,45 +22,110 @@
         <div class="mascot-coat" aria-hidden="true">🔬</div>
       </div>
       <h1 class="title">Foxy's Tiny Lab</h1>
-      <p class="subtitle">Little experiments • Big discoveries • Tiny scientist!</p>
+      <p class="subtitle">Pick something fun to do!</p>
 
-      <button id="playBtn" class="big-btn play">▶ Start exploring</button>
-
-      <div class="start-row">
-        <button id="howBtn" class="pill-btn">❓ How to play</button>
-        <button id="stickersBtn" class="pill-btn">🎟️ My stickers</button>
+      <div class="menu-grid">
+        <button class="menu-btn" data-go="introScreen"><span class="menu-emoji">🎬</span><span>Meet Foxy</span></button>
+        <button class="menu-btn primary" data-go="gameScreen"><span class="menu-emoji">🧪</span><span>Experiments</span></button>
+        <button class="menu-btn" data-go="storyListScreen"><span class="menu-emoji">📖</span><span>Story Time</span></button>
+        <button class="menu-btn" data-go="teacherScreen"><span class="menu-emoji">👩‍🏫</span><span>Ask Teacher</span></button>
+        <button class="menu-btn" id="homeStickersBtn"><span class="menu-emoji">🎟️</span><span>My Stickers</span></button>
+        <button class="menu-btn" id="homeHowBtn"><span class="menu-emoji">❓</span><span>How to play</span></button>
       </div>
+
       <div class="start-row">
         <button id="soundToggle" class="pill-btn" aria-pressed="true">🔊 Sound</button>
         <button id="voiceToggle" class="pill-btn" aria-pressed="true">🗣️ Voice</button>
+        <button id="grownupBtn" class="pill-btn">👨‍👩‍👧 Grown-ups</button>
       </div>
-
       <div id="savedBadge" class="saved-badge hidden"></div>
     </div>
-    <p class="grown-up-note">For little learners aged 4–6 — Foxy reads everything out loud. Each card is a tiny experiment that teaches real research thinking: <em>guess, count, compare, discover.</em> 💛</p>
+    <p class="grown-up-note">For little learners aged 4–6. Foxy reads everything aloud. Big ideas from real research — made tiny, cute, and simple. 💛</p>
   </section>
 
-  <!-- ===================== GAME SCREEN ===================== -->
+  <!-- ===================== INTRO ("Meet Foxy") ===================== -->
+  <section id="introScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">🎬 Meet Foxy</span>
+      <button id="introReplay" class="icon-btn" aria-label="Replay">🔁</button>
+    </header>
+    <div class="intro-stage">
+      <div id="introArt" class="intro-art">🦊</div>
+      <p id="introText" class="intro-text">Hi!</p>
+      <div id="introDots" class="dots"></div>
+      <div class="intro-actions">
+        <button id="introSkip" class="pill-btn">Skip ⏭</button>
+        <button id="introNext" class="big-btn play">Next ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STORY LIST ===================== -->
+  <section id="storyListScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">📖 Story Time — Research Legends</span>
+      <span style="width:52px"></span>
+    </header>
+    <p class="sub-hint">Tap a story. Each legend teaches a research idea! ✨</p>
+    <div id="storyList" class="story-list"></div>
+  </section>
+
+  <!-- ===================== STORY READER ===================== -->
+  <section id="storyScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="storyListScreen" aria-label="Back to stories">📚</button>
+      <span id="storyTitle" class="sub-title">Story</span>
+      <button id="storyRepeat" class="icon-btn" aria-label="Read again">🔁</button>
+    </header>
+    <div class="story-stage">
+      <div id="storyArt" class="story-art">📖</div>
+      <p id="storyText" class="story-text"></p>
+      <div id="storyTakeaway" class="story-takeaway hidden"></div>
+      <div id="storyDots" class="dots"></div>
+      <div class="story-actions">
+        <button id="storyPrev" class="pill-btn">◀ Back</button>
+        <button id="storyNext" class="big-btn play">Next ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TEACHER ===================== -->
+  <section id="teacherScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">👩‍🏫 Ask Teacher Foxy</span>
+      <button id="teacherRepeat" class="icon-btn" aria-label="Read again">🔁</button>
+    </header>
+
+    <div class="teacher-stage">
+      <div class="teacher-fox" aria-hidden="true">🦊</div>
+      <div id="teacherAnswer" class="teacher-answer">Hi! I'm Teacher Foxy. Tap a question, or grown-ups can type one. Let's learn about research! 🔬</div>
+      <div id="aiBadge" class="ai-badge hidden">🤖 AI mode on</div>
+
+      <div class="ask-row">
+        <input type="text" id="askInput" placeholder="Type a question… (grown-ups)" autocomplete="off" />
+        <button id="askBtn" class="big-btn play">Ask</button>
+      </div>
+
+      <p class="sub-hint">Or tap a question:</p>
+      <div id="questionChips" class="chips"></div>
+    </div>
+  </section>
+
+  <!-- ===================== GAME (experiments) ===================== -->
   <section id="gameScreen" class="screen game-screen hidden">
     <header class="hud">
-      <button id="homeBtn" class="icon-btn" title="Back to start" aria-label="Back to start">🏠</button>
-
-      <div class="hud-stat" title="Stars earned">
-        <span class="hud-icon">⭐</span>
-        <span id="starCount">0</span>
-      </div>
-
+      <button class="icon-btn" data-go="homeScreen" title="Home" aria-label="Home">🏠</button>
+      <div class="hud-stat" title="Stars"><span class="hud-icon">⭐</span><span id="starCount">0</span></div>
       <div class="level-wrap">
         <div class="level-label">🔬 Level <span id="levelNum">1</span></div>
-        <div class="progress-track" aria-hidden="true">
-          <div id="progressFill" class="progress-fill"></div>
-        </div>
+        <div class="progress-track" aria-hidden="true"><div id="progressFill" class="progress-fill"></div></div>
       </div>
-
       <button id="repeatBtn" class="icon-btn" title="Hear it again" aria-label="Hear it again">🔁</button>
     </header>
 
-    <!-- The little "experiment steps" ribbon: Guess → Find out → Discover -->
     <div id="modeBadge" class="mode-badge">🧪 Experiment</div>
 
     <main class="play-area">
@@ -67,41 +133,67 @@
         <span class="speech-fox" aria-hidden="true">🦊</span>
         <span id="speechText">Tap the card to start an experiment!</span>
       </div>
-
       <div id="cardSlot" class="card-slot">
         <button id="drawCard" class="quest-card card-back" aria-label="Draw an experiment card">
           <span class="card-back-art">🎴</span>
           <span class="card-back-text">Tap to explore</span>
         </button>
       </div>
-
       <div id="answers" class="answers" role="group" aria-label="Choose your answer"></div>
     </main>
   </section>
 
-  <!-- ===================== HOW TO PLAY ===================== -->
+  <!-- ===================== HOW MODAL ===================== -->
   <div id="howModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <div class="modal-card">
       <h2 id="howTitle">How to play 🦊🔬</h2>
       <ol class="how-list">
-        <li><span class="how-emoji">🎴</span> Tap the card to start a tiny experiment.</li>
-        <li><span class="how-emoji">🔮</span> Make a guess — that's what scientists do first!</li>
-        <li><span class="how-emoji">🔍</span> Count, compare, or find the pattern to discover the answer.</li>
-        <li><span class="how-emoji">⭐</span> Discover it to win a star and fill the bar.</li>
-        <li><span class="how-emoji">🎟️</span> Level up to collect a cute sticker!</li>
+        <li><span class="how-emoji">🎬</span> Start with <strong>Meet Foxy</strong> to say hello.</li>
+        <li><span class="how-emoji">🧪</span> <strong>Experiments</strong>: tap a card, guess, then discover the answer.</li>
+        <li><span class="how-emoji">📖</span> <strong>Story Time</strong>: cute legends that teach research ideas.</li>
+        <li><span class="how-emoji">👩‍🏫</span> <strong>Ask Teacher</strong>: tap a question to learn about research.</li>
+        <li><span class="how-emoji">⭐</span> Win stars and collect 🎟️ stickers!</li>
       </ol>
-      <p class="grown-up-tip"><strong>For grown-ups:</strong> Every card secretly teaches a quantitative-research idea made tiny — making a guess (hypothesis), counting (data), reading a chart (visualization), most-common (mode), fair-sharing (average), patterns (trends), and chance (probability). Foxy explains each one in kid words. The goal: turn big ideas into little "aha!" moments.</p>
-      <button id="closeHow" class="big-btn">Let's go!</button>
+      <p class="grown-up-tip"><strong>For grown-ups:</strong> Every part secretly teaches a quantitative-research idea — hypotheses, data, charts, mode, average, patterns, and probability — in kid words. Answers wait for a tap, so nothing rushes by. Optional: add an AI key under <em>Grown-ups</em> to let kids ask Teacher Foxy anything.</p>
+      <button id="closeHow" class="big-btn">Got it!</button>
     </div>
   </div>
 
-  <!-- ===================== STICKER BOOK ===================== -->
+  <!-- ===================== STICKER MODAL ===================== -->
   <div id="stickerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="stickerTitle">
     <div class="modal-card">
       <h2 id="stickerTitle">🎟️ My sticker book</h2>
       <p class="muted">Collect a sticker every time you level up!</p>
       <div id="stickerGrid" class="sticker-grid"></div>
       <button id="closeStickers" class="big-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- ===================== GROWN-UP / AI MODAL ===================== -->
+  <div id="aiModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
+    <div class="modal-card">
+      <h2 id="aiTitle">👨‍👩‍👧 Grown-ups</h2>
+      <p class="muted small">Optional: add an AI key so Teacher Foxy can answer <em>any</em> question in kid-friendly words. Your key is stored only in this browser and sent straight to the API you choose. Leave blank to use the built-in answers.</p>
+
+      <label for="aiProvider">Provider</label>
+      <select id="aiProvider">
+        <option value="anthropic">Anthropic (Claude)</option>
+        <option value="openai">OpenAI-compatible</option>
+      </select>
+      <div id="aiBaseRow">
+        <label for="aiBase">API base URL</label>
+        <input type="text" id="aiBase" placeholder="https://api.anthropic.com" autocomplete="off" />
+      </div>
+      <label for="aiKey">API key</label>
+      <input type="password" id="aiKey" placeholder="sk-…" autocomplete="off" />
+      <label for="aiModel">Model</label>
+      <input type="text" id="aiModel" placeholder="claude-haiku-4-5-20251001" autocomplete="off" />
+
+      <div class="modal-actions">
+        <button id="aiSave" class="big-btn play">Save</button>
+        <button id="aiClear" class="pill-btn">Remove key</button>
+        <button id="aiClose" class="pill-btn">Close</button>
+      </div>
     </div>
   </div>
 
