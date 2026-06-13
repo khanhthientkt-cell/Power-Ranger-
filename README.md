@@ -12,7 +12,7 @@ No build step, no server. Just open `index.html`.
 - **Readability metrics** — Flesch Reading Ease, Flesch–Kincaid grade level, and Gunning Fog index.
 - **Reference extraction** — pulls and counts the reference list and in-text citations.
 - **Highlight sentences** — surfaces the most informative sentences (contributions, findings, conclusions).
-- **AI summary (optional)** — generate a TL;DR, key contributions, methods, findings, and limitations using the Claude API with your own key.
+- **AI summary & Q&A (optional)** — generate a TL;DR, contributions, methods, findings, and limitations, and ask questions grounded in the paper. Works with the **Anthropic API** or any **OpenAI-compatible endpoint** (custom base URL), using your own key.
 - **Export** — download a full `.md` analysis report.
 
 ## 🚀 Usage
@@ -23,11 +23,18 @@ No build step, no server. Just open `index.html`.
 3. Click **Analyze paper**.
 4. (Optional) Open **AI Settings**, paste your Anthropic API key, and click **Generate with Claude**.
 
+## 🤖 AI providers
+
+Open **AI Settings** and choose a provider:
+
+- **Anthropic (Claude):** base URL `https://api.anthropic.com`, key `sk-ant-...`, model e.g. `claude-sonnet-4-6`.
+- **OpenAI-compatible:** any endpoint exposing `/chat/completions` (LiteLLM, vLLM, Ollama, gateways, etc.). Set the base URL (including `/v1`), your `Authorization: Bearer` key, and the model name.
+
+> ⚠️ **http endpoints:** A browser will **block** requests to an `http://` API from a page served over `https://` ("mixed content"). If your endpoint is http-only, open this site over **http** (e.g. run it locally) for the AI features to work. The non-AI analysis works everywhere.
+
 ## 🔐 Privacy
 
-Everything runs locally in your browser. Your paper text is **never** sent anywhere unless you explicitly click **Generate with Claude**, in which case the text is sent directly to the Anthropic API. Your API key is stored only in your browser's `localStorage`.
-
-> Note: Direct browser calls to the Anthropic API require CORS to be permitted; some networks or environments may block this. The local analysis works fully offline.
+Everything runs locally in your browser. Your paper text is **never** sent anywhere unless you explicitly use an AI feature, in which case the text is sent directly from your browser to the API you configured. Your API key is stored only in your browser's `localStorage` — it is never committed to this repo or sent anywhere else.
 
 ## ☁️ Deploy to Cloudflare Pages
 

@@ -23,7 +23,10 @@
   const settingsBtn = $("settingsBtn");
   const settingsModal = $("settingsModal");
   const apiKeyInput = $("apiKey");
-  const modelSelect = $("modelSelect");
+  const modelInput = $("modelInput");
+  const providerSelect = $("providerSelect");
+  const baseUrlInput = $("baseUrl");
+  const settingsHint = $("settingsHint");
   const saveSettings = $("saveSettings");
   const closeSettings = $("closeSettings");
   const clearKey = $("clearKey");
@@ -35,11 +38,52 @@
   // ---- Settings persistence ----
   const LS_KEY = "paperlens_apikey";
   const LS_MODEL = "paperlens_model";
+  const LS_PROVIDER = "paperlens_provider";
+  const LS_BASEURL = "paperlens_baseurl";
+
+  const PROVIDER_DEFAULTS = {
+    anthropic: { baseUrl: "https://api.anthropic.com", model: "claude-sonnet-4-6" },
+    // Pre-filled custom endpoint (the key is NOT stored here — paste it below).
+    openai: { baseUrl: "http://211.20.245.95:21434/v1", model: "" },
+  };
+
+  function getProvider() { return localStorage.getItem(LS_PROVIDER) || "anthropic"; }
+  function getBaseUrl() {
+    return (localStorage.getItem(LS_BASEURL) || PROVIDER_DEFAULTS[getProvider()].baseUrl).replace(/\/+$/, "");
+  }
+  function getModel() {
+    return localStorage.getItem(LS_MODEL) || PROVIDER_DEFAULTS[getProvider()].model;
+  }
+
+  function updateSettingsHint() {
+    const p = providerSelect.value;
+    if (p === "openai") {
+      settingsHint.innerHTML =
+        "OpenAI-compatible mode calls <code>{base}/chat/completions</code>. " +
+        "Note: an <strong>http://</strong> endpoint only works when this site is opened over http " +
+        "(e.g. locally) — browsers block http calls from an https page.";
+    } else {
+      settingsHint.textContent = "Anthropic mode calls {base}/v1/messages directly from your browser.";
+    }
+  }
+
   function loadSettings() {
+    const provider = getProvider();
+    providerSelect.value = provider;
     apiKeyInput.value = localStorage.getItem(LS_KEY) || "";
-    modelSelect.value = localStorage.getItem(LS_MODEL) || "claude-sonnet-4-6";
+    baseUrlInput.value = getBaseUrl();
+    modelInput.value = getModel();
+    updateSettingsHint();
   }
   loadSettings();
+
+  // When provider changes in the modal, swap in that provider's defaults
+  providerSelect.addEventListener("change", () => {
+    const d = PROVIDER_DEFAULTS[providerSelect.value];
+    baseUrlInput.value = d.baseUrl;
+    modelInput.value = d.model;
+    updateSettingsHint();
+  });
 
   // ---- Status helper ----
   function setStatus(msg, type) {
@@ -459,53 +503,70 @@
   // ===================================================================
   //  AI SUMMARY (Claude API, optional)
   // ===================================================================
-  async function generateAISummary() {
+  // Unified AI call — supports Anthropic and OpenAI-compatible providers.
+  async function callAI(userPrompt, maxTokens) {
     const key = localStorage.getItem(LS_KEY);
     if (!key) {
       openSettings();
-      setStatus("Add a Claude API key to enable AI summaries.", "error");
-      return;
+      setStatus("Add an API key in AI Settings to use AI features.", "error");
+      throw new Error("No API key configured.");
     }
-    const model = localStorage.getItem(LS_MODEL) || "claude-sonnet-4-6";
+    const provider = getProvider();
+    const base = getBaseUrl();
+    const model = getModel();
+    if (!model) throw new Error("No model set in AI Settings.");
+
+    if (provider === "openai") {
+      const res = await fetch(base + "/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxTokens,
+          messages: [{ role: "user", content: userPrompt }],
+        }),
+      });
+      if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || "";
+    }
+
+    // Anthropic
+    const res = await fetch(base + "/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: userPrompt }] }),
+    });
+    if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    const data = await res.json();
+    return (data.content || []).map((b) => b.text || "").join("\n");
+  }
+
+  async function generateAISummary() {
+    if (!localStorage.getItem(LS_KEY)) { openSettings(); setStatus("Add an API key to enable AI summaries.", "error"); return; }
     const body = $("summaryBody");
     const btn = $("aiSummaryBtn");
     btn.disabled = true;
-    body.innerHTML = `<p class="muted"><span class="spinner"></span> Analyzing with ${model}…</p>`;
+    body.innerHTML = `<p class="muted"><span class="spinner"></span> Analyzing with ${escapeHtml(getModel() || "AI")}…</p>`;
 
-    // Trim text to keep request reasonable
-    const excerpt = currentText.slice(0, 24000);
     const prompt =
       "You are an expert research assistant. Analyze the following journal paper text and respond in Markdown with these sections:\n" +
       "## TL;DR (2-3 sentences)\n## Key Contributions (bullets)\n## Methods (brief)\n## Main Findings (bullets)\n## Limitations & Caveats (bullets)\n## Who should read this\n\n" +
-      "Be concise and specific. If information is missing, say so.\n\nPAPER TEXT:\n" + excerpt;
+      "Be concise and specific. If information is missing, say so.\n\nPAPER TEXT:\n" + currentText.slice(0, 24000);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`API ${res.status}: ${errText.slice(0, 300)}`);
-      }
-      const data = await res.json();
-      const md = (data.content || []).map((b) => b.text || "").join("\n");
+      const md = await callAI(prompt, 1500);
       body.innerHTML = `<div class="ai-content">${miniMarkdown(md)}</div>`;
       currentAnalysis.aiSummary = md;
     } catch (err) {
       console.error(err);
       body.innerHTML = `<p class="status error">Failed: ${escapeHtml(err.message)}</p>
-        <p class="muted small">If you see a CORS or network error, your environment may block direct browser API calls.</p>`;
+        <p class="muted small">A CORS, network, or "mixed content" error means your browser blocked the request. For an http:// endpoint, open this site over http (e.g. locally).</p>`;
     } finally {
       btn.disabled = false;
     }
@@ -593,9 +654,7 @@
     const q = $("askInput").value.trim();
     if (!q) return;
     if (!currentText) { setStatus("Analyze a paper first.", "error"); return; }
-    const key = localStorage.getItem(LS_KEY);
-    if (!key) { openSettings(); setStatus("Add a Claude API key to ask questions.", "error"); return; }
-    const model = localStorage.getItem(LS_MODEL) || "claude-sonnet-4-6";
+    if (!localStorage.getItem(LS_KEY)) { openSettings(); setStatus("Add an API key to ask questions.", "error"); return; }
     const thread = $("askThread");
     const item = document.createElement("div");
     item.className = "qa";
@@ -608,19 +667,7 @@
       "Answer the question using ONLY the paper text below. If the answer is not in the text, say so clearly. Be concise and cite the relevant section when possible.\n\n" +
       "QUESTION: " + q + "\n\nPAPER TEXT:\n" + currentText.slice(0, 24000);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({ model, max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
-      });
-      if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-      const data = await res.json();
-      const answer = (data.content || []).map((b) => b.text || "").join("\n");
+      const answer = await callAI(prompt, 1000);
       item.querySelector(".a").innerHTML = `<div class="ai-content">${miniMarkdown(answer)}</div>`;
     } catch (err) {
       item.querySelector(".a").innerHTML = `<span class="status error">Failed: ${escapeHtml(err.message)}</span>`;
@@ -779,7 +826,9 @@
   settingsModal.addEventListener("click", (e) => { if (e.target === settingsModal) settingsModal.classList.add("hidden"); });
   saveSettings.addEventListener("click", () => {
     localStorage.setItem(LS_KEY, apiKeyInput.value.trim());
-    localStorage.setItem(LS_MODEL, modelSelect.value);
+    localStorage.setItem(LS_PROVIDER, providerSelect.value);
+    localStorage.setItem(LS_BASEURL, baseUrlInput.value.trim());
+    localStorage.setItem(LS_MODEL, modelInput.value.trim());
     settingsModal.classList.add("hidden");
     setStatus("AI settings saved.", "success");
   });
