@@ -84,23 +84,53 @@
   function span(cls,t){const s=document.createElement("span");s.className=cls;if(t!=null)s.textContent=t;return s;}
   function items(item,n,cls="count-item"){const f=document.createDocumentFragment();for(let i=0;i<n;i++){const s=span(cls,item);s.style.animationDelay=(i*0.05)+"s";f.appendChild(s);}return f;}
 
-  /* ---------------- anime SVG fox character ---------------- */
+  /* ---------------- anime SVG fox character (full body + moods) ---------------- */
   const FOX_SVG = `
-  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-    <g class="ear-l"><polygon points="20,40 30,6 54,32" fill="#ff924c"/><polygon points="29,32 33,16 45,30" fill="#ffd0b5"/></g>
-    <g class="ear-r"><polygon points="100,40 90,6 66,32" fill="#ff924c"/><polygon points="91,32 87,16 75,30" fill="#ffd0b5"/></g>
-    <ellipse cx="60" cy="64" rx="43" ry="41" fill="#ff924c"/>
-    <path d="M60 38 C 38 38 27 58 30 76 C 33 95 49 102 60 102 C 71 102 87 95 90 76 C 93 58 82 38 60 38 Z" fill="#fff6ef"/>
-    <ellipse class="blush" cx="36" cy="76" rx="8.5" ry="5" fill="#ffaecb" opacity=".75"/>
-    <ellipse class="blush" cx="84" cy="76" rx="8.5" ry="5" fill="#ffaecb" opacity=".75"/>
-    <g class="eye eye-l"><ellipse cx="46" cy="64" rx="8.5" ry="11" fill="#3a2e3e"/><circle cx="49.5" cy="59.5" r="3.2" fill="#fff"/><circle cx="44" cy="67" r="1.6" fill="#fff" opacity=".8"/></g>
-    <g class="eye eye-r"><ellipse cx="74" cy="64" rx="8.5" ry="11" fill="#3a2e3e"/><circle cx="77.5" cy="59.5" r="3.2" fill="#fff"/><circle cx="72" cy="67" r="1.6" fill="#fff" opacity=".8"/></g>
-    <path d="M55 78 L65 78 L60 85 Z" fill="#3a2e3e"/>
-    <path d="M60 85 C 55 92 48 90 47 86" fill="none" stroke="#3a2e3e" stroke-width="2.6" stroke-linecap="round"/>
-    <path d="M60 85 C 65 92 72 90 73 86" fill="none" stroke="#3a2e3e" stroke-width="2.6" stroke-linecap="round"/>
+  <svg viewBox="0 0 120 134" xmlns="http://www.w3.org/2000/svg">
+    <g class="tail"><path d="M30 106 C 6 106 2 80 16 72 C 18 88 30 94 41 98 Z" fill="#ff924c"/><path d="M28 104 C 18 104 12 96 14 88 C 20 94 30 98 38 100 Z" fill="#fff6ef"/></g>
+    <g class="body">
+      <path d="M42 84 C 33 94 31 120 38 129 L82 129 C 89 120 87 94 78 84 Z" fill="#ffffff" stroke="#e7ddf3" stroke-width="2"/>
+      <path d="M60 86 L52 100 L60 105 L68 100 Z" fill="#dfeefc"/>
+      <line x1="60" y1="105" x2="60" y2="127" stroke="#e7ddf3" stroke-width="2"/>
+      <rect x="44" y="111" width="12" height="11" rx="2" fill="none" stroke="#e7ddf3" stroke-width="2"/>
+      <rect x="48.5" y="108" width="3" height="9" rx="1.5" fill="#9b6bff"/>
+      <ellipse class="arm-l" cx="34" cy="104" rx="8" ry="11" fill="#ff924c"/>
+      <ellipse class="arm-r" cx="86" cy="104" rx="8" ry="11" fill="#ff924c"/>
+    </g>
+    <g class="head">
+      <g class="ear-l"><polygon points="22,40 30,8 52,32" fill="#ff924c"/><polygon points="30,32 33,18 44,30" fill="#ffd0b5"/></g>
+      <g class="ear-r"><polygon points="98,40 90,8 68,32" fill="#ff924c"/><polygon points="90,32 87,18 76,30" fill="#ffd0b5"/></g>
+      <ellipse cx="60" cy="54" rx="38" ry="36" fill="#ff924c"/>
+      <path d="M60 32 C 40 32 30 50 33 66 C 36 82 50 88 60 88 C 70 88 84 82 87 66 C 90 50 80 32 60 32 Z" fill="#fff6ef"/>
+      <ellipse class="blush" cx="36" cy="66" rx="8" ry="4.6" fill="#ffaecb" opacity=".75"/>
+      <ellipse class="blush" cx="84" cy="66" rx="8" ry="4.6" fill="#ffaecb" opacity=".75"/>
+      <g class="v eyes-open">
+        <g class="eye"><ellipse cx="47" cy="56" rx="7.5" ry="10" fill="#3a2e3e"/><circle cx="50" cy="52" r="3" fill="#fff"/><circle cx="45" cy="59" r="1.5" fill="#fff" opacity=".8"/></g>
+        <g class="eye"><ellipse cx="73" cy="56" rx="7.5" ry="10" fill="#3a2e3e"/><circle cx="76" cy="52" r="3" fill="#fff"/><circle cx="71" cy="59" r="1.5" fill="#fff" opacity=".8"/></g>
+      </g>
+      <g class="v eyes-happy">
+        <path d="M40 58 Q47 50 54 58" fill="none" stroke="#3a2e3e" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M66 58 Q73 50 80 58" fill="none" stroke="#3a2e3e" stroke-width="3.2" stroke-linecap="round"/>
+      </g>
+      <g class="v eyes-wow">
+        <g class="eye"><ellipse cx="47" cy="55" rx="9" ry="12" fill="#fff" stroke="#3a2e3e" stroke-width="2"/><circle cx="47" cy="56" r="5" fill="#3a2e3e"/><circle cx="49" cy="53" r="1.6" fill="#fff"/></g>
+        <g class="eye"><ellipse cx="73" cy="55" rx="9" ry="12" fill="#fff" stroke="#3a2e3e" stroke-width="2"/><circle cx="73" cy="56" r="5" fill="#3a2e3e"/><circle cx="75" cy="53" r="1.6" fill="#fff"/></g>
+      </g>
+      <path d="M55 68 L65 68 L60 74 Z" fill="#3a2e3e"/>
+      <g class="v mouth-smile">
+        <path d="M60 74 C 55 80 49 79 48 75" fill="none" stroke="#3a2e3e" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M60 74 C 65 80 71 79 72 75" fill="none" stroke="#3a2e3e" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <g class="v mouth-open">
+        <path d="M50 74 Q60 90 70 74 Z" fill="#3a2e3e"/>
+        <path d="M54 80 Q60 87 66 80 Z" fill="#ff7eb6"/>
+      </g>
+      <g class="v mouth-o"><ellipse cx="60" cy="79" rx="5" ry="6" fill="#3a2e3e"/></g>
+    </g>
   </svg>`;
   function injectFoxies(){ document.querySelectorAll("[data-foxy]").forEach(n=>{ if(!n.dataset.done){ n.innerHTML=FOX_SVG; n.dataset.done="1"; } }); }
   function foxCheer(){ document.querySelectorAll(".foxy").forEach(n=>{ n.classList.remove("cheer"); void n.offsetWidth; n.classList.add("cheer"); }); }
+  function setFox(mood){ document.querySelectorAll(".foxy").forEach(n=>{ n.classList.remove("mood-happy","mood-think","mood-wow","mood-cheer"); if(mood) n.classList.add("mood-"+mood); }); }
 
   /* ---------------- floating particles ---------------- */
   function initBokeh(){
@@ -306,7 +336,7 @@
       return c;
     }));
   }
-  function setTeacherAnswer(text, loading=false){ el.teacherAnswer.textContent=text; el.teacherAnswer.classList.toggle("loading",loading); if(!loading) speak(text); }
+  function setTeacherAnswer(text, loading=false){ el.teacherAnswer.textContent=text; el.teacherAnswer.classList.toggle("loading",loading); setFox(loading?"think":"happy"); if(!loading){ speak(text); foxCheer(); } }
   function answerCurated(item){ setTeacherAnswer(item.a); sfx.pop(); }
 
   function bestMatch(qRaw){
@@ -505,7 +535,7 @@
     const card=document.createElement("div"); card.className="quest-card"; ch.scene(card); el.cardSlot.replaceChildren(card);
     el.answers.className="answers "+(ch.layout||"grid"); el.answers.replaceChildren(); ch._nodes=[];
     ch.options.forEach(opt=>{ const node=buildOption(opt); ch._nodes.push({opt,node}); const h=()=>choose(opt,node,ch); node.addEventListener("click",h); node.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();h();}}); el.answers.appendChild(node); });
-    fox(ch.question); sfx.draw();
+    fox(ch.question); sfx.draw(); setFox("think");
   }
   function buildOption(opt){
     if(opt.text!=null){const b=document.createElement("button");b.className="answer-btn";b.textContent=opt.text;return b;}
@@ -521,8 +551,8 @@
   function choose(opt,node,ch){
     if(locked)return;
     if(ch.jars&&!ch._revealed){ ch._revealed=true; ch._nodes.forEach(({opt:o,node:n})=>{if(n._count){n._count.classList.remove("hidden-q");n._count.textContent=String(o.count);sfx.pop();}}); if(ch.revealMsg)fox(ch.revealMsg()); }
-    if(opt.correct){ locked=true; node.classList.add("right"); starBurst(node); foxCheer(); ch._nodes.forEach(({node:n})=>{if(n!==node)n.classList.add("dim");}); onCorrect(ch); }
-    else { node.classList.add("wrong"); sfx.wrong(); fox(pick(NUDGE)); setTimeout(()=>node.classList.remove("wrong"),450); }
+    if(opt.correct){ locked=true; node.classList.add("right"); starBurst(node); setFox("cheer"); foxCheer(); ch._nodes.forEach(({node:n})=>{if(n!==node)n.classList.add("dim");}); onCorrect(ch); }
+    else { node.classList.add("wrong"); sfx.wrong(); fox(pick(NUDGE)); setFox("wow"); setTimeout(()=>{node.classList.remove("wrong"); if(!locked)setFox("think");},600); }
   }
 
   function onCorrect(ch){
@@ -556,7 +586,7 @@
     el.answers.className="answers"; el.answers.replaceChildren();
     const back=document.createElement("button"); back.className="quest-card card-back"; back.setAttribute("aria-label","Draw an experiment card");
     back.appendChild(span("card-back-art","🎴")); back.appendChild(span("card-back-text","Tap to explore")); back.addEventListener("click",drawNow);
-    el.cardSlot.replaceChildren(back); if(msg)fox(msg,!!say);
+    el.cardSlot.replaceChildren(back); if(msg)fox(msg,!!say); setFox("happy");
   }
   function drawNow(){ if(!awaitingDraw)return; ensureAudio(); showExperiment(dealExperiment()); }
 
@@ -568,7 +598,7 @@
     el.celebrateText.textContent="You're a "+title+"! 🎉";
     if(newSticker){el.celebrateSticker.classList.remove("hidden");el.newSticker.textContent=newSticker;} else el.celebrateSticker.classList.add("hidden");
     el.celebrate.classList.remove("hidden"); el.celebrate.setAttribute("aria-hidden","false");
-    sfx.levelUp(); speak("Level up! You're a "+title+"! You earned a new sticker!"); runConfetti();
+    sfx.levelUp(); setFox("cheer"); foxCheer(); speak("Level up! You're a "+title+"! You earned a new sticker!"); runConfetti();
   }
   function closeCelebrate(){ stopConfetti(); el.celebrate.classList.add("hidden"); el.celebrate.setAttribute("aria-hidden","true"); resetToDraw("New level! Tap the card to keep exploring! 🎴", true); }
 

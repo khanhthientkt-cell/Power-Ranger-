@@ -244,4 +244,21 @@ body{
 .new-sticker{font-size:70px;animation:cheer 1s ease infinite;}
 .confetti-canvas{position:absolute;inset:0;z-index:1;pointer-events:none;}
 
+/* ---- fox expressions (mood) ---- */
+.foxy .v{display:none;}
+.foxy .eyes-open,.foxy .mouth-smile{display:block;}
+.foxy.mood-cheer .eyes-open,.foxy.mood-cheer .mouth-smile{display:none;}
+.foxy.mood-cheer .eyes-happy,.foxy.mood-cheer .mouth-open{display:block;}
+.foxy.mood-wow .eyes-open,.foxy.mood-wow .mouth-smile{display:none;}
+.foxy.mood-wow .eyes-wow,.foxy.mood-wow .mouth-o{display:block;}
+.foxy .head{transition:transform .25s ease;}
+.foxy.mood-think .head{transform-box:fill-box;transform-origin:60% 85%;transform:rotate(-6deg);}
+/* tail wag + arm sway */
+.foxy .tail{transform-box:fill-box;transform-origin:90% 90%;animation:tailwag 1.5s ease-in-out infinite;}
+@keyframes tailwag{0%,100%{transform:rotate(-7deg);}50%{transform:rotate(12deg);}}
+.foxy.mood-cheer .tail{animation:tailwag .5s ease-in-out infinite;}
+.foxy .arm-l{transform-box:fill-box;transform-origin:top center;animation:armsway 3s ease-in-out infinite;}
+.foxy .arm-r{transform-box:fill-box;transform-origin:top center;animation:armsway 3s ease-in-out infinite .4s;}
+@keyframes armsway{0%,100%{transform:rotate(0);}50%{transform:rotate(6deg);}}
+
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;}.progress-fill{transition:none;}body{animation:none;}}
