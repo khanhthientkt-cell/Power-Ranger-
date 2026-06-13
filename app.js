@@ -48,7 +48,7 @@
   ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen",
    "soundToggle","voiceToggle","grownupBtn","savedBadge","homeStickersBtn","homeHowBtn",
    "introArt","introText","introDots","introSkip","introNext","introReplay",
-   "storyList","storyTitle","storyArt","storyText","storyTakeaway","storyDots","storyPrev","storyNext","storyRepeat",
+   "storyList","storyTitle","storyScene","storyText","storyTakeaway","storyDots","storyPrev","storyNext","storyRepeat","bokeh","starStat",
    "teacherAnswer","aiBadge","askInput","askBtn","questionChips","teacherRepeat",
    "modeBadge","starCount","levelNum","progressFill","speechText","cardSlot","drawCard","answers","repeatBtn",
    "howModal","closeHow","stickerModal","closeStickers","stickerGrid",
@@ -84,6 +84,47 @@
   function span(cls,t){const s=document.createElement("span");s.className=cls;if(t!=null)s.textContent=t;return s;}
   function items(item,n,cls="count-item"){const f=document.createDocumentFragment();for(let i=0;i<n;i++){const s=span(cls,item);s.style.animationDelay=(i*0.05)+"s";f.appendChild(s);}return f;}
 
+  /* ---------------- anime SVG fox character ---------------- */
+  const FOX_SVG = `
+  <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <g class="ear-l"><polygon points="20,40 30,6 54,32" fill="#ff924c"/><polygon points="29,32 33,16 45,30" fill="#ffd0b5"/></g>
+    <g class="ear-r"><polygon points="100,40 90,6 66,32" fill="#ff924c"/><polygon points="91,32 87,16 75,30" fill="#ffd0b5"/></g>
+    <ellipse cx="60" cy="64" rx="43" ry="41" fill="#ff924c"/>
+    <path d="M60 38 C 38 38 27 58 30 76 C 33 95 49 102 60 102 C 71 102 87 95 90 76 C 93 58 82 38 60 38 Z" fill="#fff6ef"/>
+    <ellipse class="blush" cx="36" cy="76" rx="8.5" ry="5" fill="#ffaecb" opacity=".75"/>
+    <ellipse class="blush" cx="84" cy="76" rx="8.5" ry="5" fill="#ffaecb" opacity=".75"/>
+    <g class="eye eye-l"><ellipse cx="46" cy="64" rx="8.5" ry="11" fill="#3a2e3e"/><circle cx="49.5" cy="59.5" r="3.2" fill="#fff"/><circle cx="44" cy="67" r="1.6" fill="#fff" opacity=".8"/></g>
+    <g class="eye eye-r"><ellipse cx="74" cy="64" rx="8.5" ry="11" fill="#3a2e3e"/><circle cx="77.5" cy="59.5" r="3.2" fill="#fff"/><circle cx="72" cy="67" r="1.6" fill="#fff" opacity=".8"/></g>
+    <path d="M55 78 L65 78 L60 85 Z" fill="#3a2e3e"/>
+    <path d="M60 85 C 55 92 48 90 47 86" fill="none" stroke="#3a2e3e" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M60 85 C 65 92 72 90 73 86" fill="none" stroke="#3a2e3e" stroke-width="2.6" stroke-linecap="round"/>
+  </svg>`;
+  function injectFoxies(){ document.querySelectorAll("[data-foxy]").forEach(n=>{ if(!n.dataset.done){ n.innerHTML=FOX_SVG; n.dataset.done="1"; } }); }
+  function foxCheer(){ document.querySelectorAll(".foxy").forEach(n=>{ n.classList.remove("cheer"); void n.offsetWidth; n.classList.add("cheer"); }); }
+
+  /* ---------------- floating particles ---------------- */
+  function initBokeh(){
+    if(!el.bokeh) return;
+    const n=10, frag=document.createDocumentFragment();
+    for(let i=0;i<n;i++){ const s=document.createElement("span"); const sz=18+rand(46);
+      s.style.width=s.style.height=sz+"px"; s.style.left=rand(100)+"%";
+      s.style.animationDuration=(10+rand(14))+"s"; s.style.animationDelay=(-rand(20))+"s";
+      frag.appendChild(s); }
+    el.bokeh.appendChild(frag);
+  }
+
+  /* ---------------- star burst effect ---------------- */
+  function starBurst(node){
+    let cx=window.innerWidth/2, cy=window.innerHeight/2;
+    try{ const r=node.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2; }catch(_){}
+    const emo=["⭐","✨","🌟","💫"];
+    for(let i=0;i<10;i++){ const s=document.createElement("div"); s.className="burst"; s.textContent=pick(emo);
+      s.style.left=cx+"px"; s.style.top=cy+"px";
+      const ang=Math.random()*Math.PI*2, dist=60+rand(90);
+      s.style.setProperty("--dx",(Math.cos(ang)*dist)+"px"); s.style.setProperty("--dy",(Math.sin(ang)*dist)+"px");
+      document.body.appendChild(s); setTimeout(()=>s.remove(),850); }
+  }
+
   /* ============================================================
      SCREEN ROUTER
      ============================================================ */
@@ -91,6 +132,7 @@
   function showScreen(id){
     stopSpeak();
     SCREENS.forEach(s=>el[s].classList.toggle("hidden", s!==id));
+    const scr=el[id]; scr.classList.remove("anim"); void scr.offsetWidth; scr.classList.add("anim");
     if(id==="homeScreen") refreshHome();
     if(id==="introScreen") startIntro();
     if(id==="storyListScreen") buildStoryList();
@@ -102,21 +144,22 @@
      INTRO ("Meet Foxy")
      ============================================================ */
   const INTRO=[
-    {art:"🦊", text:"Hi! I'm Foxy, a tiny scientist!"},
-    {art:"🔬✨", text:"Welcome to my Tiny Lab!"},
-    {art:"❓🔮🔍", text:"Scientists ASK, GUESS, then FIND OUT!"},
-    {art:"🧮📊🎲", text:"We count, make charts, and discover patterns!"},
-    {art:"⭐🎟️", text:"Win stars and collect stickers. Let's explore!"},
+    {art:"", text:"Hi! I'm Foxy, a tiny scientist! 🦊"},
+    {art:"🔬✨🧪", text:"Welcome to my Tiny Lab!"},
+    {art:"❓ 🔮 🔍", text:"Scientists ASK, GUESS, then FIND OUT!"},
+    {art:"🧮 📊 🎲", text:"We count, make charts, and discover patterns!"},
+    {art:"⭐ 🎟️", text:"Win stars and collect stickers. Let's explore!"},
   ];
   let introI=0;
   function startIntro(){ introI=0; renderIntro(); }
   function renderIntro(){
     const s=INTRO[introI];
-    el.introArt.textContent=s.art;
+    if(s.art){ el.introArt.classList.remove("hidden"); el.introArt.textContent=s.art; }
+    else el.introArt.classList.add("hidden");
     el.introText.textContent=s.text;
     el.introDots.replaceChildren(...INTRO.map((_,i)=>div("dot"+(i===introI?" on":""))));
     el.introNext.textContent = introI===INTRO.length-1 ? "Let's go! 🎉" : "Next ▶";
-    speak(s.text); sfx.page();
+    foxCheer(); speak(s.text); sfx.page();
   }
   function introNext(){ if(introI<INTRO.length-1){ introI++; renderIntro(); } else { showScreen("gameScreen"); } }
 
@@ -126,51 +169,75 @@
   const STORIES=[
     { id:"count", title:"The Counting Stars", emoji:"⭐", tag:"Data",
       pages:[
-        {art:"🦊🌙", text:"Long ago, little Foxy looked up at the night sky."},
-        {art:"✨✨✨", text:"\"How many stars are there?\" he wondered."},
-        {art:"🦊👉⭐", text:"So he pointed at each one and counted: one, two, three…"},
-        {art:"📋⭐", text:"Counting things one by one is how we collect DATA!"},
+        {actors:["🦊","🌙"], text:"Long ago, little Foxy looked up at the night sky."},
+        {actors:["✨","⭐","✨","🌟"], text:"\"How many stars are there?\" he wondered."},
+        {actors:["🦊","👉","⭐"], text:"So he pointed at each one and counted: one, two, three…"},
+        {actors:["📋","⭐"], text:"Counting things one by one is how we collect DATA!"},
       ], takeaway:"Counting = collecting data 🧮" },
 
     { id:"guess", title:"The Two Jars", emoji:"🫙", tag:"Hypothesis",
       pages:[
-        {art:"🫙🫙", text:"Two jars sat on the table. Which had more candy?"},
-        {art:"🦊🤔", text:"Foxy made a GUESS first: \"The big jar!\""},
-        {art:"🦊🔢", text:"Then he counted to check… the small jar had more!"},
-        {art:"💡", text:"A guess you test by checking is a HYPOTHESIS!"},
+        {actors:["🫙","🫙"], text:"Two jars sat on the table. Which had more candy?"},
+        {actors:["🦊","🤔"], text:"Foxy made a GUESS first: \"The big jar!\""},
+        {actors:["🦊","🔢"], text:"Then he counted to check… the small jar had more!"},
+        {actors:["💡"], text:"A guess you test by checking is a HYPOTHESIS!"},
       ], takeaway:"Guess, then check 🔮" },
 
     { id:"survey", title:"The Village Vote", emoji:"🗳️", tag:"Charts",
       pages:[
-        {art:"🐰🐻🐱", text:"The animals could not agree on the best fruit."},
-        {art:"🍎🍌🍇", text:"So each one put a stone next to their favorite."},
-        {art:"📊", text:"They stacked the stones. The tallest pile won!"},
-        {art:"🏆🍎", text:"Stacking counts to compare them makes a CHART!"},
+        {actors:["🐰","🐻","🐱"], text:"The animals could not agree on the best fruit."},
+        {actors:["🍎","🍌","🍇"], text:"So each one put a stone next to their favorite."},
+        {actors:["📊"], text:"They stacked the stones. The tallest pile won!"},
+        {actors:["🏆","🍎"], text:"Stacking counts to compare them makes a CHART!"},
       ], takeaway:"Charts show data fast 📊" },
 
     { id:"average", title:"The Fair Feast", emoji:"🍪", tag:"Average",
       pages:[
-        {art:"🐻🐰🐱", text:"Three friends found a big plate of cookies."},
-        {art:"🤨", text:"\"It's not fair if one gets more!\" said Bunny."},
-        {art:"🤝🍪", text:"So they shared equally — the same for everyone."},
-        {art:"⚖️", text:"Sharing equally is like finding the AVERAGE!"},
+        {actors:["🐻","🐰","🐱","🍪"], text:"Three friends found a big plate of cookies."},
+        {actors:["🐰","🤨"], text:"\"It's not fair if one gets more!\" said Bunny."},
+        {actors:["🍪","🤝","🍪"], text:"So they shared equally — the same for everyone."},
+        {actors:["⚖️"], text:"Sharing equally is like finding the AVERAGE!"},
       ], takeaway:"Average = a fair share 🍪" },
 
     { id:"pattern", title:"The Pattern Path", emoji:"🌈", tag:"Trends",
       pages:[
-        {art:"🦊🛤️", text:"Foxy found a path made of magic stones."},
-        {art:"🔴🔵🔴🔵", text:"Red, blue, red, blue… it kept repeating!"},
-        {art:"🦊💡", text:"\"I see the pattern! Blue comes next!\""},
-        {art:"🔮", text:"Spotting patterns helps us guess what's next — a TREND!"},
+        {actors:["🦊","🛤️"], text:"Foxy found a path made of magic stones."},
+        {actors:["🔴","🔵","🔴","🔵"], text:"Red, blue, red, blue… it kept repeating!"},
+        {actors:["🦊","💡"], text:"\"I see the pattern! Blue comes next!\""},
+        {actors:["🔮"], text:"Spotting patterns helps us guess what's next — a TREND!"},
       ], takeaway:"Patterns show trends 🔁" },
 
     { id:"chance", title:"The Lucky Berry Bag", emoji:"🎒", tag:"Chance",
       pages:[
-        {art:"🎒🫐", text:"Foxy had a bag with many red berries and a few blue."},
-        {art:"🦊🤔", text:"\"Which will I grab without looking?\""},
-        {art:"🔴", text:"More red berries means red is more LIKELY!"},
-        {art:"🎲", text:"How likely something is — that's CHANCE!"},
+        {actors:["🎒","🫐"], text:"Foxy had a bag with many red berries and a few blue."},
+        {actors:["🦊","🤔"], text:"\"Which will I grab without looking?\""},
+        {actors:["🔴","🔴","🔴","🔵"], text:"More red berries means red is more LIKELY!"},
+        {actors:["🎲"], text:"How likely something is — that's CHANCE!"},
       ], takeaway:"More of it = more likely 🎲" },
+
+    { id:"measure", title:"The Tall Tower", emoji:"📏", tag:"Measure",
+      pages:[
+        {actors:["🦊","🧱"], text:"Foxy and friends built towers out of blocks."},
+        {actors:["🧱","🧱","🧱"], text:"\"Whose tower is the tallest?\" they asked."},
+        {actors:["📏"], text:"They used a ruler to measure each one carefully."},
+        {actors:["🏆","📏"], text:"Measuring lets us compare sizes fairly!"},
+      ], takeaway:"Measuring compares sizes 📏" },
+
+    { id:"sort", title:"The Sorting Tree", emoji:"🌳", tag:"Sorting",
+      pages:[
+        {actors:["🌳","🍂"], text:"Leaves of many colors fell from the big tree."},
+        {actors:["🟥","🟨","🟩"], text:"Foxy put red with red, yellow with yellow…"},
+        {actors:["🗂️"], text:"Now each color had its own neat little pile."},
+        {actors:["🦊","✅"], text:"Sorting into groups helps us understand our data!"},
+      ], takeaway:"Sorting groups things 🗂️" },
+
+    { id:"biggest", title:"The Biggest Pumpkin", emoji:"🎃", tag:"Compare",
+      pages:[
+        {actors:["🎃","🎃","🎃"], text:"At the fair, three pumpkins sat in a row."},
+        {actors:["🦊","🔍"], text:"\"Which one is the BIGGEST?\" wondered Foxy."},
+        {actors:["🎃","🏆"], text:"He looked carefully and found the giant one!"},
+        {actors:["📊"], text:"Finding the biggest is a kind of comparing!"},
+      ], takeaway:"Finding the biggest is comparing 🔍" },
   ];
   let story=null, storyPage=0;
 
@@ -184,18 +251,21 @@
       return c;
     }));
   }
-  function openStory(s){ story=s; storyPage=0; el.storyTitle.textContent=s.emoji+" "+s.title; showScreen("storyScreen"); el.storyScreen.classList.remove("hidden"); SCREENS.forEach(x=>el[x].classList.toggle("hidden",x!=="storyScreen")); renderStory(); }
+  function openStory(s){ story=s; storyPage=0; el.storyTitle.textContent=s.emoji+" "+s.title; SCREENS.forEach(x=>el[x].classList.toggle("hidden",x!=="storyScreen")); const scr=el.storyScreen; scr.classList.remove("anim"); void scr.offsetWidth; scr.classList.add("anim"); renderStory(); }
+  function renderActors(list){
+    el.storyScene.replaceChildren(...list.map((emo,i)=>{ const a=span("actor",emo); a.style.animationDelay=(i*0.12)+"s, "+(0.55+i*0.12)+"s"; return a; }));
+  }
+  function animateText(t){ el.storyText.classList.remove("show"); void el.storyText.offsetWidth; el.storyText.textContent=t; el.storyText.classList.add("show"); }
   function renderStory(){
     const last = storyPage>=story.pages.length;
     if(!last){
       const p=story.pages[storyPage];
-      el.storyArt.textContent=p.art; el.storyText.textContent=p.text;
+      renderActors(p.actors); animateText(p.text);
       el.storyTakeaway.classList.add("hidden");
       el.storyNext.textContent = storyPage===story.pages.length-1 ? "Finish 🎉" : "Next ▶";
       speak(p.text);
     } else {
-      el.storyArt.textContent=story.emoji;
-      el.storyText.textContent="The End! 🌟";
+      renderActors([story.emoji,"🌟"]); animateText("The End! 🌟");
       el.storyTakeaway.textContent="What we learned: "+story.takeaway;
       el.storyTakeaway.classList.remove("hidden");
       el.storyNext.textContent="More stories 📚";
@@ -361,7 +431,45 @@
     {text:"I twinkle in the night sky. Count us way up high!", a:"⭐", o:["🐶","🚌","🍇"]},
     {text:"We go red, blue, red, blue — a repeating kind of fun!", a:"🔁", o:["🍦","🐸","🚀"]},
     {text:"I am a tool that helps you guess what comes next. Which am I?", a:"🔮", o:["🧁","🐢","🚲"]},
+    {text:"I am a long stick that helps you measure how tall things are.", a:"📏", o:["🍩","🐙","🎈"]},
+    {text:"I am yellow and I live in the sky in the daytime. Count my rays!", a:"☀️", o:["🐸","🚗","🍇"]},
+    {text:"I have four wheels and say beep beep. Count us in the street!", a:"🚗", o:["🍎","⭐","🐱"]},
+    {text:"I float up high on a string at parties. How many of me?", a:"🎈", o:["📚","🐢","🥕"]},
+    {text:"I help you weigh things to see which side is heavier.", a:"⚖️", o:["🍌","🚀","🐶"]},
+    {text:"I am a tiny buzzing helper who visits flowers. Count the bunch!", a:"🐝", o:["🚌","🍩","⭐"]},
   ];
+
+  // numeral comparison — number sense
+  function expBigNumber(d){
+    const big=Math.random()<0.5; let a=rand(d.maxN)+1,b=rand(d.maxN)+1; while(a===b)b=rand(d.maxN)+1;
+    const correct=big?Math.max(a,b):Math.min(a,b);
+    return { name:big?"Bigger Number":"Smaller Number", question:big?"Which number is BIGGER?":"Which number is SMALLER?", tip:"Knowing which number is bigger helps us compare data!",
+      scene(c){c.append(div("card-question",big?"Which is BIGGER? 🔢":"Which is SMALLER? 🔢"));},
+      layout:"row", options:[a,b].map(x=>({text:String(x),correct:x===correct})) };
+  }
+  // counting sequence — number order
+  function expSeqNumber(d){
+    const s=rand(Math.max(1,d.maxN-3))+1; const seq=[s,s+1,s+2]; const next=s+3;
+    return { name:"Next Number", question:"What number comes next?", tip:"Numbers go in order — that's counting up!",
+      scene(c){const row=div("pattern-row");seq.forEach((m,i)=>{const t=span("numeral",String(m));t.style.animationDelay=(i*0.08)+"s";row.appendChild(t);});row.appendChild(span("pattern-q","❓"));c.append(div("card-question","🔢 What comes next?"),row);},
+      layout:"grid", options:numberOptions(next,d.opts,d.maxN+2).map(v=>({text:String(v),correct:v===next})) };
+  }
+  // odd one out — classifying
+  function expOddOne(d){
+    const theme=pick(THEMES); const [same,odd]=pickN(theme,2);
+    const opts=shuffle([{emojiBtn:odd,correct:true},{emojiBtn:same,correct:false},{emojiBtn:same,correct:false},{emojiBtn:same,correct:false}]);
+    return { name:"Odd One Out", question:"Which one is DIFFERENT?", tip:"Spotting what's different helps us sort and classify!",
+      scene(c){c.append(div("card-question","🔍 Which one is DIFFERENT?"),div("card-sub","Find the one that doesn't match!"));},
+      layout:"grid", options:opts };
+  }
+  // read an exact value off a chart — data visualization
+  function expChartValue(d){
+    const theme=pick(THEMES); const cats=pickN(theme,3); const counts=cats.map(()=>rand(5)+1);
+    const ti=rand(3); const target=cats[ti], tcount=counts[ti];
+    return { name:"Read the Chart", question:`How many votes did ${target} get?`, tip:"Reading the exact number off a chart is a real scientist skill!",
+      scene(c){c.append(div("card-question",`📊 How many for ${target}?`));const wrap=div("answers col");wrap.style.maxWidth="none";wrap.style.width="100%";cats.forEach((cc,i)=>{const row=div("bar-row");row.style.cursor="default";row.appendChild(span("bar-label",cc));const fill=div("bar-fill");for(let k=0;k<counts[i];k++){const bc=span("bar-cell",cc);bc.style.animationDelay=(k*0.05)+"s";fill.appendChild(bc);}row.appendChild(fill);wrap.appendChild(row);});c.append(wrap);},
+      layout:"grid", options:numberOptions(tcount,d.opts,6).map(v=>({text:String(v),correct:v===tcount})) };
+  }
   function expRiddle(d){
     const r=pick(RIDDLES); const opts=shuffle([r.a,...pickN(r.o,Math.max(2,d.opts-1))]);
     return { name:"Riddle Time", question:r.text, tip:"Riddles make us think carefully — just like solving a research puzzle!",
@@ -370,15 +478,17 @@
   }
 
   function dealExperiment(){
-    const d=diff(); const bag=["count","compare","guess","sort","riddle"];
-    if(d.l>=2)bag.push("survey");
-    if(d.l>=3)bag.push("pattern","survey");
-    if(d.l>=4)bag.push("share","chance");
-    if(d.l>=5)bag.push("chance","pattern","riddle");
+    const d=diff(); const bag=["count","compare","guess","sort","riddle","odd","bignum"];
+    if(d.l>=2)bag.push("survey","seq");
+    if(d.l>=3)bag.push("pattern","survey","chartval");
+    if(d.l>=4)bag.push("share","chance","chartval");
+    if(d.l>=5)bag.push("chance","pattern","riddle","odd");
     switch(pick(bag)){
       case "compare":return expCompare(d); case "guess":return expGuess(d); case "sort":return expSort(d);
       case "survey":return expSurvey(d); case "pattern":return expPattern(d); case "share":return expShare(d);
-      case "chance":return expChance(d); case "riddle":return expRiddle(d); default:return expCount(d);
+      case "chance":return expChance(d); case "riddle":return expRiddle(d);
+      case "odd":return expOddOne(d); case "bignum":return expBigNumber(d); case "seq":return expSeqNumber(d);
+      case "chartval":return expChartValue(d); default:return expCount(d);
     }
   }
 
@@ -411,7 +521,7 @@
   function choose(opt,node,ch){
     if(locked)return;
     if(ch.jars&&!ch._revealed){ ch._revealed=true; ch._nodes.forEach(({opt:o,node:n})=>{if(n._count){n._count.classList.remove("hidden-q");n._count.textContent=String(o.count);sfx.pop();}}); if(ch.revealMsg)fox(ch.revealMsg()); }
-    if(opt.correct){ locked=true; node.classList.add("right"); ch._nodes.forEach(({node:n})=>{if(n!==node)n.classList.add("dim");}); onCorrect(ch); }
+    if(opt.correct){ locked=true; node.classList.add("right"); starBurst(node); foxCheer(); ch._nodes.forEach(({node:n})=>{if(n!==node)n.classList.add("dim");}); onCorrect(ch); }
     else { node.classList.add("wrong"); sfx.wrong(); fox(pick(NUDGE)); setTimeout(()=>node.classList.remove("wrong"),450); }
   }
 
@@ -439,7 +549,7 @@
 
   function grantSticker(){ const left=STICKERS.filter(s=>!state.stickers.includes(s)); const s=left.length?pick(left):pick(STICKERS); if(!state.stickers.includes(s))state.stickers.push(s); return s; }
 
-  function updateHud(){ el.starCount.textContent=state.stars; el.levelNum.textContent=state.level; el.progressFill.style.width=Math.round((state.progress/STARS_PER_LEVEL)*100)+"%"; }
+  function updateHud(){ el.starCount.textContent=state.stars; el.levelNum.textContent=state.level; el.progressFill.style.width=Math.round((state.progress/STARS_PER_LEVEL)*100)+"%"; if(el.starStat){ el.starStat.classList.remove("bump"); void el.starStat.offsetWidth; el.starStat.classList.add("bump"); } }
 
   function resetToDraw(msg,say){
     awaitingDraw=true; current=null; locked=false; el.modeBadge.textContent="🧪 New experiment?";
@@ -478,7 +588,7 @@
 
   /* ---------------- init ---------------- */
   function init(){
-    load(); refreshToggles(); refreshHome();
+    load(); refreshToggles(); refreshHome(); injectFoxies(); initBokeh();
 
     // menu navigation
     document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{ ensureAudio(); showScreen(b.getAttribute("data-go")); }));
@@ -528,7 +638,7 @@
     if("speechSynthesis"in window)window.speechSynthesis.getVoices();
 
     // expose generators for tests (harmless in browser)
-    window.__foxytest={dealExperiment,diff,state,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,buildOption,bestMatch};
+    window.__foxytest={dealExperiment,diff,state,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,expBigNumber,expSeqNumber,expOddOne,expChartValue,buildOption,bestMatch};
   }
 
   document.addEventListener("DOMContentLoaded",init);
