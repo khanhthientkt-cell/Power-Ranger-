@@ -244,6 +244,42 @@ body{
 .new-sticker{font-size:70px;animation:cheer 1s ease infinite;}
 .confetti-canvas{position:absolute;inset:0;z-index:1;pointer-events:none;}
 
+/* ===================== BOARD ADVENTURE ===================== */
+.board-coins{font-size:20px;border-width:3px;}
+.board-hint{margin:12px 16px 4px;text-align:center;font-weight:900;font-size:clamp(16px,4.4vw,20px);color:#43345a;background:rgba(255,255,255,.85);border-radius:18px;padding:10px 14px;align-self:center;max-width:560px;box-shadow:var(--shadow-sm);}
+.board-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 16px;max-width:560px;width:100%;margin:0 auto;align-content:start;}
+.tile{position:relative;aspect-ratio:1;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:clamp(22px,7vw,34px);background:#fff;box-shadow:var(--shadow-sm);border:3px solid #fff;outline:3px solid rgba(255,255,255,.7);}
+.tile.t-challenge{outline-color:#c0a3ff;background:#f6f0ff;}
+.tile.t-coin{outline-color:var(--sun);background:#fff8da;}
+.tile.t-crew{outline-color:var(--pink);background:#ffeef6;}
+.tile.t-forward{outline-color:#7CFFB2;background:#e8fff2;}
+.tile.t-back{outline-color:#7dd3fc;background:#e6f7ff;}
+.tile.t-story{outline-color:#ffd0b5;background:#fff4ec;}
+.tile.t-start{outline-color:#9b6bff;background:#efe7ff;}
+.tile.t-finish{outline-color:var(--sun);background:linear-gradient(180deg,#fff3b0,#ffd86b);font-size:clamp(26px,8vw,40px);}
+.tile.done{filter:saturate(.6) opacity(.7);}
+.tile .token{position:absolute;inset:-6px;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,9vw,44px);animation:tokhop .4s ease;pointer-events:none;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25));z-index:2;}
+@keyframes tokhop{0%{transform:translateY(-14px) scale(1.15);}100%{transform:none;}}
+
+.board-controls{display:flex;justify-content:center;padding:10px 16px calc(16px + env(safe-area-inset-bottom));}
+.die{width:84px;height:84px;border-radius:20px;background:linear-gradient(180deg,#fff,#f0eaff);border:4px solid #fff;outline:4px solid var(--purple);box-shadow:var(--shadow);cursor:pointer;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;padding:14px;transition:transform .08s;}
+.die:active{transform:translateY(4px);}
+.die.rolling{animation:diceroll .6s ease;}
+@keyframes diceroll{0%{transform:rotate(0) scale(1);}25%{transform:rotate(-18deg) scale(1.08);}50%{transform:rotate(16deg) scale(1.08);}75%{transform:rotate(-10deg);}100%{transform:none;}}
+.die:disabled{cursor:default;opacity:.7;}
+.pip{border-radius:50%;background:#43345a;align-self:center;justify-self:center;width:70%;height:70%;}
+.pip.off{background:transparent;}
+
+.challenge-card{max-width:560px;}
+.ch-scene{display:flex;justify-content:center;margin-bottom:14px;}
+.ch-scene .quest-card{box-shadow:none;outline:none;border:none;min-height:auto;animation:none;}
+.answers.mini.grid{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));}
+
+/* toast */
+.toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#43345a;color:#fff;font-weight:900;font-size:18px;padding:12px 20px;border-radius:999px;z-index:70;box-shadow:var(--shadow);animation:toastpop 1.6s ease forwards;}
+@keyframes toastpop{0%{opacity:0;transform:translateX(-50%) scale(.8);}15%{opacity:1;transform:translateX(-50%) scale(1);}85%{opacity:1;}100%{opacity:0;}}
+#boardWin{background:rgba(255,216,107,.5);}
+
 /* ===================== VOYAGE MAP ===================== */
 .voyage-map{position:relative;flex:1;overflow-y:auto;padding:10px 0 40px;background:linear-gradient(180deg,#bdeeff,#8fd9f5 60%,#6fc7ee);}
 .voyage-inner{position:relative;max-width:520px;margin:0 auto;padding:20px 16px;}

@@ -26,7 +26,8 @@
       <p class="subtitle">Pick something fun to do!</p>
 
       <div class="menu-grid">
-        <button class="menu-btn primary" data-go="voyageScreen"><span class="menu-emoji">🏴‍☠️</span><span>Grand Voyage</span></button>
+        <button class="menu-btn primary" data-go="boardScreen"><span class="menu-emoji">🎲</span><span>Board Adventure</span></button>
+        <button class="menu-btn" data-go="voyageScreen"><span class="menu-emoji">🏴‍☠️</span><span>Grand Voyage</span></button>
         <button class="menu-btn" data-go="gameScreen"><span class="menu-emoji">🧪</span><span>Experiments</span></button>
         <button class="menu-btn" data-go="storyListScreen"><span class="menu-emoji">📖</span><span>Story Time</span></button>
         <button class="menu-btn" data-go="teacherScreen"><span class="menu-emoji">👩‍🏫</span><span>Ask Teacher</span></button>
@@ -56,6 +57,39 @@
     <p class="sub-hint">Sail to each island, beat the challenge, and welcome a new crewmate aboard! ⛵</p>
     <div id="voyageMap" class="voyage-map"></div>
   </section>
+
+  <!-- ===================== BOARD ADVENTURE ===================== -->
+  <section id="boardScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">🎲 Treasure Voyage</span>
+      <div class="hud-stat board-coins"><span class="hud-icon">🪙</span><span id="coinCount">0</span></div>
+    </header>
+    <div id="boardHint" class="board-hint">🦊 Tap the dice to roll and sail!</div>
+    <div id="boardGrid" class="board-grid"></div>
+    <div class="board-controls">
+      <button id="diceBtn" class="die" aria-label="Roll the dice"></button>
+    </div>
+  </section>
+
+  <!-- challenge popup used by the board -->
+  <div id="challengeModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card challenge-card">
+      <div id="chScene" class="ch-scene"></div>
+      <div id="chOptions" class="answers"></div>
+    </div>
+  </div>
+
+  <!-- board win overlay -->
+  <div id="boardWin" class="celebrate hidden" aria-hidden="true">
+    <div class="celebrate-card">
+      <div class="celebrate-badge">🏝️🏆</div>
+      <h2>Treasure found!</h2>
+      <p id="boardWinText">You sailed the whole board!</p>
+      <button id="boardAgainBtn" class="big-btn play">Sail a new sea ▶</button>
+    </div>
+    <canvas id="boardConfetti" class="confetti-canvas"></canvas>
+  </div>
 
   <!-- ===================== INTRO ===================== -->
   <section id="introScreen" class="screen sub-screen hidden">

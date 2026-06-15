@@ -35,7 +35,7 @@
   /* ---------------- state ---------------- */
   const SAVE_KEY = "foxyLab.save.v1";
   const AI_KEY = "foxyLab.ai.v1";
-  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[], islandIndex:0, crew:[] };
+  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[], islandIndex:0, crew:[], coins:0, boards:0 };
 
   /* ---------------- Grand Voyage islands + crew (original characters) ---------------- */
   const ISLANDS = [
@@ -66,7 +66,8 @@
   /* ---------------- DOM ---------------- */
   const $ = (id)=>document.getElementById(id);
   const el = {};
-  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen",
+  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen",
+   "coinCount","boardHint","boardGrid","diceBtn","challengeModal","chScene","chOptions","boardWin","boardWinText","boardAgainBtn","boardConfetti",
    "voyageMap","voyageCrewBtn","homeCrewBtn","crewModal","closeCrew","crewGrid",
    "recruit","recruitEmoji","recruitName","recruitBio","recruitJoin","recruitBtn","recruitConfetti",
    "soundToggle","voiceToggle","grownupBtn","savedBadge","homeStickersBtn","homeHowBtn",
@@ -181,7 +182,7 @@
   /* ============================================================
      SCREEN ROUTER
      ============================================================ */
-  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen"];
+  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen"];
   function showScreen(id){
     stopSpeak();
     if(id!=="gameScreen") adventure.active=false;   // leaving a chapter ends adventure mode
@@ -192,6 +193,7 @@
     if(id==="storyListScreen") buildStoryList();
     if(id==="teacherScreen") openTeacher();
     if(id==="voyageScreen") buildVoyage();
+    if(id==="boardScreen") startBoard();
     if(id==="gameScreen") enterGame();
   }
 
@@ -680,20 +682,133 @@
     const scr=el.gameScreen; scr.classList.remove("anim"); void scr.offsetWidth; scr.classList.add("anim");
     enterGame();
   }
+  let recruitNext=null;
+  function showRecruit(crew, joinText, next){
+    recruitNext=next||null;
+    el.recruitEmoji.textContent=crew.emoji;
+    el.recruitName.textContent="🎉 "+crew.name;
+    el.recruitBio.textContent=crew.bio;
+    el.recruitJoin.textContent=joinText;
+    el.recruit.classList.remove("hidden"); el.recruit.setAttribute("aria-hidden","false");
+    sfx.levelUp(); foxCheer(); speak(crew.name+"! "+crew.bio); runConfetti(el.recruitConfetti);
+  }
   function finishChapter(){
     const isl=adventure.island;
     if(!state.crew.includes(isl.id)) state.crew.push(isl.id);
     const i=ISLANDS.findIndex(x=>x.id===isl.id);
     if(i+1>state.islandIndex) state.islandIndex=Math.min(i+1, ISLANDS.length-1);
     adventure.active=false; save();
-    el.recruitEmoji.textContent=isl.crew.emoji;
-    el.recruitName.textContent="🎉 "+isl.crew.name;
-    el.recruitBio.textContent=isl.crew.bio;
-    el.recruitJoin.textContent= isl.id==="treasure" ? "You finished the Grand Voyage! 🏆" : "joined your crew! 🎉";
-    el.recruit.classList.remove("hidden"); el.recruit.setAttribute("aria-hidden","false");
-    sfx.levelUp(); foxCheer(); speak(isl.crew.name+"! "+isl.crew.bio); runConfetti(el.recruitConfetti);
+    showRecruit(isl.crew, isl.id==="treasure"?"You finished the Grand Voyage! 🏆":"joined your crew! 🎉", null);
   }
-  function closeRecruit(){ stopConfetti(); el.recruit.classList.add("hidden"); el.recruit.setAttribute("aria-hidden","true"); showScreen("voyageScreen"); }
+  function closeRecruit(){ stopConfetti(); el.recruit.classList.add("hidden"); el.recruit.setAttribute("aria-hidden","true"); if(recruitNext){const f=recruitNext;recruitNext=null;f();} else showScreen("voyageScreen"); }
+
+  /* ---------------- BOARD ADVENTURE (dice game) ---------------- */
+  let board=[], bpos=0, boardBusy=false;
+  const LORE=["The sea sparkles with data!","A friendly dolphin waves hello!","You smell treasure nearby!","The stars point the way!","Foxy hums a sailing song!"];
+  const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  const BOARD_KEYS=["count","compare","survey","pattern","sort","odd","bignum","seq","chartval","riddle","share","chance","guess"];
+  function boardDiff(){ const l=Math.min(1+state.boards,8); return {l, maxN:Math.min(4+l,12), opts:l>=3?4:3}; }
+  function genBoard(){
+    const L=24, t=new Array(L), crewSpots=[6,12,18];
+    t[0]={type:"start",icon:"🏁"}; t[L-1]={type:"finish",icon:"🏆"};
+    for(let i=1;i<L-1;i++){
+      if(crewSpots.includes(i)){ t[i]={type:"crew",icon:"⭐"}; continue; }
+      const r=Math.random();
+      if(r<0.50) t[i]={type:"challenge",icon:"🧪"};
+      else if(r<0.68) t[i]={type:"coin",icon:"🪙"};
+      else if(r<0.80) t[i]={type:"forward",icon:"🚀"};
+      else if(r<0.90) t[i]={type:"back",icon:"🌊"};
+      else t[i]={type:"story",icon:"💬"};
+    }
+    return t;
+  }
+  function startBoard(){ board=genBoard(); bpos=0; boardBusy=false; renderBoard(); renderDie(1); updateBoardHud(); setFox("happy"); el.diceBtn.disabled=false; boardHint("🦊 Tap the dice to roll and sail!", true); }
+  function boardHint(t,say){ el.boardHint.textContent=t; if(say) speak(t.replace(/^🦊\s*/,"")); }
+  function updateBoardHud(){ el.coinCount.textContent=state.coins; }
+  function renderBoard(){
+    const cols=5, rows=[], cells=[];
+    for(let i=0;i<board.length;i+=cols) rows.push(board.slice(i,i+cols).map((tile,j)=>({tile,idx:i+j})));
+    rows.forEach((row,ri)=>{ (ri%2===1?row.slice().reverse():row).forEach(c=>cells.push(c)); });
+    el.boardGrid.replaceChildren(...cells.map(({tile,idx})=>{
+      const d=div("tile t-"+tile.type, tile.icon);
+      if(idx<bpos) d.classList.add("done");
+      if(idx===bpos) d.appendChild(div("token","⛵"));
+      return d;
+    }));
+  }
+  function renderDie(n){ const set=new Set(PIPS[n]||[]); el.diceBtn.replaceChildren(...Array.from({length:9},(_,i)=>div("pip"+(set.has(i)?"":" off")))); }
+  function rollDice(){
+    if(boardBusy) return; boardBusy=true; ensureAudio(); setFox("think");
+    el.diceBtn.disabled=true; el.diceBtn.classList.add("rolling");
+    let ticks=0; const iv=setInterval(()=>{ renderDie(rand(6)+1); sfx.pop();
+      if(++ticks>=6){ clearInterval(iv); const n=rand(6)+1; renderDie(n); el.diceBtn.classList.remove("rolling");
+        boardHint("You rolled "+n+"! ⛵", true);
+        setTimeout(()=>moveToken(n,()=>resolveTile(bpos)),550);
+      }
+    },90);
+  }
+  function moveToken(steps,cb){
+    const dir=steps>0?1:-1; let remaining=Math.abs(steps);
+    const step=()=>{
+      if(remaining<=0){ cb(); return; }
+      const nx=bpos+dir;
+      if(nx<0){ cb(); return; }
+      if(nx>board.length-1){ bpos=board.length-1; renderBoard(); cb(); return; }
+      bpos=nx; remaining--; renderBoard(); sfx.pop();
+      if(bpos===board.length-1){ cb(); return; }
+      setTimeout(step,300);
+    };
+    step();
+  }
+  function endTurn(){ boardBusy=false; el.diceBtn.disabled=false; setFox("happy"); boardHint("🦊 Tap the dice to roll again!", false); }
+  function toast(t){ const d=div("toast",t); document.body.appendChild(d); setTimeout(()=>d.remove(),1600); }
+  function resolveTile(i){
+    const tile=board[i];
+    switch(tile.type){
+      case "finish": boardWin(); return;
+      case "challenge":
+        runChallenge(makeExp(pick(BOARD_KEYS),boardDiff()), ()=>{ state.coins+=2; save(); updateBoardHud(); toast("+2 🪙"); endTurn(); });
+        return;
+      case "coin": state.coins+=3; save(); updateBoardHud(); toast("+3 🪙 Treasure!"); speak("You found three coins!"); endTurn(); return;
+      case "forward": toast("Lucky wind! ➡️ +2"); speak("Lucky wind! Sail forward two!"); setTimeout(()=>moveToken(2,()=>resolveTile(bpos)),700); return;
+      case "back": toast("A big wave! 🌊 back 2"); speak("A big wave pushes you back two!"); setTimeout(()=>moveToken(-2,()=>resolveTile(bpos)),700); return;
+      case "story": { const line=pick(LORE); toast("💬 "+line); speak(line); endTurn(); return; }
+      case "crew": {
+        const next=ISLANDS.find(isl=>!state.crew.includes(isl.id));
+        if(next){ state.crew.push(next.id); const k=ISLANDS.findIndex(x=>x.id===next.id); if(k+1>state.islandIndex)state.islandIndex=Math.min(k+1,ISLANDS.length-1); save(); showRecruit(next.crew,"joined your crew! 🎉",endTurn); }
+        else { state.coins+=5; save(); updateBoardHud(); toast("+5 🪙 (crew is full!)"); endTurn(); }
+        return;
+      }
+      default: endTurn();
+    }
+  }
+  function boardWin(){
+    state.boards+=1; state.coins+=10; save(); updateBoardHud();
+    el.boardWinText.textContent="You sailed the whole board and found the treasure! +10 🪙";
+    el.boardWin.classList.remove("hidden"); el.boardWin.setAttribute("aria-hidden","false");
+    sfx.levelUp(); setFox("cheer"); foxCheer(); speak("Treasure found! You are a Research Captain!"); runConfetti(el.boardConfetti);
+  }
+  function closeBoardWin(){ stopConfetti(); el.boardWin.classList.add("hidden"); el.boardWin.setAttribute("aria-hidden","true"); startBoard(); }
+
+  // shared challenge popup (used by the board)
+  function runChallenge(ch,onSolved){
+    ch._rev=false;
+    const card=document.createElement("div"); card.className="quest-card"; ch.scene(card);
+    el.chScene.replaceChildren(card);
+    el.chOptions.className="answers mini "+(ch.layout||"grid"); el.chOptions.replaceChildren();
+    let solved=false; const nodes=[];
+    ch.options.forEach(opt=>{ const node=buildOption(opt); nodes.push({opt,node});
+      const h=()=>{ if(solved)return;
+        if(ch.jars&&!ch._rev){ ch._rev=true; nodes.forEach(({opt:o,node:n})=>{ if(n._count){n._count.classList.remove("hidden-q");n._count.textContent=String(o.count);sfx.pop();} }); }
+        if(opt.correct){ solved=true; node.classList.add("right"); starBurst(node); setFox("cheer"); sfx.correct(); speak(pick(PRAISE)+" "+(ch.tip||"")); setTimeout(()=>{ el.challengeModal.classList.add("hidden"); onSolved(); },1200); }
+        else { node.classList.add("wrong"); sfx.wrong(); setFox("wow"); setTimeout(()=>node.classList.remove("wrong"),450); }
+      };
+      node.addEventListener("click",h); node.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();h();}});
+      el.chOptions.appendChild(node);
+    });
+    setFox("think"); speak(ch.question);
+    el.challengeModal.classList.remove("hidden");
+  }
   function openCrew(){
     el.crewGrid.replaceChildren(...ISLANDS.map(isl=>{
       const got=state.crew.includes(isl.id);
@@ -727,6 +842,8 @@
     el.crewModal.addEventListener("click",e=>{if(e.target===el.crewModal)el.crewModal.classList.add("hidden");});
     el.recruitBtn.addEventListener("click",closeRecruit);
     el.recruit.addEventListener("click",e=>{if(e.target===el.recruit)closeRecruit();});
+    el.diceBtn.addEventListener("click",rollDice);
+    el.boardAgainBtn.addEventListener("click",closeBoardWin);
 
     // intro
     el.introNext.addEventListener("click",introNext);
@@ -771,7 +888,7 @@
     if("speechSynthesis"in window)window.speechSynthesis.getVoices();
 
     // expose generators for tests (harmless in browser)
-    window.__foxytest={dealExperiment,diff,state,makeExp,ISLANDS,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,expBigNumber,expSeqNumber,expOddOne,expChartValue,buildOption,bestMatch};
+    window.__foxytest={dealExperiment,diff,state,makeExp,ISLANDS,BOARD_KEYS,boardDiff,genBoard,renderDie,runChallenge,expCount,expCompare,expGuess,expSort,expSurvey,expPattern,expShare,expChance,expRiddle,expBigNumber,expSeqNumber,expOddOne,expChartValue,buildOption,bestMatch};
   }
 
   document.addEventListener("DOMContentLoaded",init);
