@@ -35,7 +35,7 @@
   /* ---------------- state ---------------- */
   const SAVE_KEY = "foxyLab.save.v1";
   const AI_KEY = "foxyLab.ai.v1";
-  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[], islandIndex:0, crew:[], coins:0, boards:0 };
+  const state = { stars:0, level:1, progress:0, sound:true, voice:true, stickers:[], islandIndex:0, crew:[], coins:0, boards:0, garden:{hearts:0, blooms:0, day:1} };
 
   /* ---------------- Grand Voyage islands + crew (original characters) ---------------- */
   const ISLANDS = [
@@ -66,7 +66,8 @@
   /* ---------------- DOM ---------------- */
   const $ = (id)=>document.getElementById(id);
   const el = {};
-  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen",
+  ["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen","gardenScreen",
+   "heartCount","gardenScene","gardenHint","gardenWaterBtn","gardenCareBtn",
    "coinCount","boardHint","boardGrid","diceBtn","challengeModal","chScene","chOptions","boardWin","boardWinText","boardAgainBtn","boardConfetti",
    "voyageMap","voyageCrewBtn","homeCrewBtn","crewModal","closeCrew","crewGrid",
    "recruit","recruitEmoji","recruitName","recruitBio","recruitJoin","recruitBtn","recruitConfetti",
@@ -182,7 +183,7 @@
   /* ============================================================
      SCREEN ROUTER
      ============================================================ */
-  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen"];
+  const SCREENS=["homeScreen","introScreen","storyListScreen","storyScreen","teacherScreen","gameScreen","voyageScreen","boardScreen","gardenScreen"];
   function showScreen(id){
     stopSpeak();
     if(id!=="gameScreen") adventure.active=false;   // leaving a chapter ends adventure mode
@@ -194,6 +195,7 @@
     if(id==="teacherScreen") openTeacher();
     if(id==="voyageScreen") buildVoyage();
     if(id==="boardScreen") startBoard();
+    if(id==="gardenScreen") openGarden();
     if(id==="gameScreen") enterGame();
   }
 
@@ -819,6 +821,51 @@
     el.crewModal.classList.remove("hidden");
   }
 
+  /* ---------------- GARDEN (pet & plant care) ---------------- */
+  const GARDEN_KEYS=["share","count","pattern","compare","sort","seq","odd"];
+  const PETS=["🐰","🐱","🐥","🐢","🦔"];
+  const PET_MOODS=["😴","🙂","😊","🥰"];
+  const FLOWERS=["🌸","🌼","🌷","🌻","🌹","🪻"];
+  const BED=24;
+  function gardenDiff(){ const l=Math.min(state.garden.day,8); return {l, maxN:Math.min(4+l,12), opts:l>=3?4:3}; }
+  function openGarden(){ updateGardenHud(); renderGarden(); setFox("happy"); gardenHint("🦊 Water the plants or care for our friends!", true); }
+  function gardenHint(t,say){ el.gardenHint.textContent=t; if(say) speak(t.replace(/^🦊\s*/,"")); }
+  function updateGardenHud(){ el.heartCount.textContent=state.garden.hearts; }
+  function renderGarden(){
+    const inner=div("garden-inner");
+    const mood=PET_MOODS[Math.min(PET_MOODS.length-1, Math.floor(state.garden.hearts/3))];
+    const petRow=div("pet-row");
+    PETS.forEach(p=>{ const w=div("pet"); w.append(span("pet-emoji",p), span("pet-mood",mood)); petRow.appendChild(w); });
+    const bed=div("garden-bed");
+    const grown=Math.min(state.garden.blooms,BED);
+    for(let i=0;i<BED;i++){ const plot=div("plot"); if(i<grown){ plot.classList.add("bloom"); plot.textContent=FLOWERS[i%FLOWERS.length]; } else plot.textContent="🌱"; bed.appendChild(plot); }
+    inner.append(petRow, bed);
+    el.gardenScene.replaceChildren(inner);
+  }
+  function gardenReward(){
+    state.garden.hearts+=1; state.garden.blooms+=1;
+    if(state.garden.blooms>=BED){ state.garden.blooms=0; state.garden.day+=1; save(); updateGardenHud(); renderGarden(); gardenHint("🌈 Your garden is in full bloom! Day "+state.garden.day+"!", true); foxCheer(); sfx.levelUp(); }
+    else { save(); updateGardenHud(); renderGarden(); toast("❤️ +1"); gardenHint("🦊 They love it! Keep caring!", false); }
+  }
+  function gardenCare(){ runChallenge(makeExp(pick(GARDEN_KEYS), gardenDiff()), gardenReward); }
+  function gardenWater(){
+    const n=rand(4)+3; // 3..6
+    const card=document.createElement("div"); card.className="quest-card";
+    card.append(div("card-question","💧 Tap each plant to water it!"), div("card-sub","Water all "+n+" plants 🌱"));
+    const grid=div("count-grid"); el.chScene.replaceChildren(card);
+    let watered=0; const plants=[];
+    for(let i=0;i<n;i++){ const p=span("count-item water-plant","🌱"); p.tabIndex=0; p.setAttribute("role","button");
+      const w=()=>{ if(p._done)return; p._done=true; p.textContent="💧"; watered++; sfx.pop();
+        if(watered>=n){ setTimeout(()=>{ plants.forEach(x=>x.textContent="🌸"); setFox("cheer"); sfx.correct(); speak("All watered! Great job!"); setTimeout(()=>{ el.challengeModal.classList.add("hidden"); gardenReward(); },1100); },200); } };
+      p.addEventListener("click",w); p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();w();}});
+      plants.push(p); grid.appendChild(p);
+    }
+    card.appendChild(grid);
+    el.chOptions.className="answers"; el.chOptions.replaceChildren();
+    setFox("think"); speak("Tap each plant to water it!");
+    el.challengeModal.classList.remove("hidden");
+  }
+
   /* ---------------- home / stickers / settings ---------------- */
   function refreshHome(){ if(state.stars>0){el.savedBadge.classList.remove("hidden");el.savedBadge.textContent=`⭐ ${state.stars} stars • Level ${state.level} • ${state.stickers.length} stickers`;} else el.savedBadge.classList.add("hidden"); }
   function openStickers(){ el.stickerGrid.replaceChildren(...STICKERS.map(s=>{const got=state.stickers.includes(s);return div("sticker-cell "+(got?"got":"empty"),got?s:"❔");})); el.stickerModal.classList.remove("hidden"); }
@@ -844,6 +891,8 @@
     el.recruit.addEventListener("click",e=>{if(e.target===el.recruit)closeRecruit();});
     el.diceBtn.addEventListener("click",rollDice);
     el.boardAgainBtn.addEventListener("click",closeBoardWin);
+    el.gardenWaterBtn.addEventListener("click",gardenWater);
+    el.gardenCareBtn.addEventListener("click",gardenCare);
 
     // intro
     el.introNext.addEventListener("click",introNext);

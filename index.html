@@ -26,7 +26,8 @@
       <p class="subtitle">Pick something fun to do!</p>
 
       <div class="menu-grid">
-        <button class="menu-btn primary" data-go="boardScreen"><span class="menu-emoji">🎲</span><span>Board Adventure</span></button>
+        <button class="menu-btn primary" data-go="gardenScreen"><span class="menu-emoji">🌷</span><span>Foxy's Garden</span></button>
+        <button class="menu-btn" data-go="boardScreen"><span class="menu-emoji">🎲</span><span>Board Adventure</span></button>
         <button class="menu-btn" data-go="voyageScreen"><span class="menu-emoji">🏴‍☠️</span><span>Grand Voyage</span></button>
         <button class="menu-btn" data-go="gameScreen"><span class="menu-emoji">🧪</span><span>Experiments</span></button>
         <button class="menu-btn" data-go="storyListScreen"><span class="menu-emoji">📖</span><span>Story Time</span></button>
@@ -56,6 +57,21 @@
     </header>
     <p class="sub-hint">Sail to each island, beat the challenge, and welcome a new crewmate aboard! ⛵</p>
     <div id="voyageMap" class="voyage-map"></div>
+  </section>
+
+  <!-- ===================== GARDEN (pet & plant care) ===================== -->
+  <section id="gardenScreen" class="screen sub-screen hidden">
+    <header class="sub-bar">
+      <button class="icon-btn" data-go="homeScreen" aria-label="Home">🏠</button>
+      <span class="sub-title">🌷 Foxy's Garden</span>
+      <div class="hud-stat garden-hearts"><span class="hud-icon">❤️</span><span id="heartCount">0</span></div>
+    </header>
+    <div id="gardenScene" class="garden-scene"></div>
+    <div id="gardenHint" class="board-hint">🦊 Let's take care of our garden friends!</div>
+    <div class="board-controls garden-controls">
+      <button id="gardenWaterBtn" class="big-btn">💧 Water</button>
+      <button id="gardenCareBtn" class="big-btn play">🌟 Care</button>
+    </div>
   </section>
 
   <!-- ===================== BOARD ADVENTURE ===================== -->
